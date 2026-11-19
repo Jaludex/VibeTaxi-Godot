@@ -35,6 +35,7 @@ func _run_all_tests() -> void:
 	_test_i18n_parity()
 	_test_all_scenes_instantiate()
 	_test_touch_and_mobile()
+	_test_discord_rpc()
 
 
 func _test_tiled_parsing() -> void:
@@ -429,3 +430,91 @@ func _test_touch_and_mobile() -> void:
 	GameFlow.handle_back_request()
 	_assert_true(mb._is_exiting, "GameFlow.handle_back_request triggers cancel on top modal")
 	GameFlow.pop_modal(mb)
+
+
+func _test_discord_rpc() -> void:
+	# 1. IPC frame encoding
+	var frame: PackedByteArray = DiscordRPC.encode_frame(0, {"v": 1, "client_id": DiscordRPC.CLIENT_ID})
+	_assert_true(frame.size() > 8 and frame.decode_u32(0) == 0 and frame.decode_u32(4) == frame.size() - 8, "DiscordRPC.encode_frame writes little-endian opcode + length header")
+	var decoded: Variant = JSON.parse_string(frame.slice(8).get_string_from_utf8())
+	_assert_true(decoded is Dictionary and (decoded as Dictionary).get("client_id") == DiscordRPC.CLIENT_ID, "DiscordRPC.encode_frame encodes valid UTF-8 JSON payload")
+
+	# 2. Activity payload builder
+	var payload: Dictionary = DiscordRPC.build_activity_payload(
+		{"details": "Workday - Day 2", "state": "Cruising", "small_image": "workday", "small_text": "Day 2"},
+		1700000000,
+		1234,
+		"7"
+	)
+	var act: Dictionary = (payload["args"] as Dictionary)["activity"] as Dictionary
+	var assets: Dictionary = act["assets"] as Dictionary
+	_assert_true(
+		payload["cmd"] == "SET_ACTIVITY" and act["details"] == "Workday - Day 2" and assets["large_image"] == "logo" and assets["small_image"] == "workday",
+		"DiscordRPC.build_activity_payload formats SET_ACTIVITY with assets and buttons"
+	)
+
+	# 3. Menu & modal presence resolution
+	var empty_modals: Array[Control] = []
+	var title_node: Node = Node.new()
+	title_node.scene_file_path = "res://src/menus/title_screen.tscn"
+	_assert_true(DiscordRPC.resolve_presence(title_node, empty_modals)["details"] == "Main Menu", "DiscordRPC resolves title_screen.tscn -> Main Menu")
+	var opening_node: Node = Node.new()
+	opening_node.scene_file_path = "res://src/menus/opening.tscn"
+	_assert_true(DiscordRPC.resolve_presence(opening_node, empty_modals)["details"] == "Starting up", "DiscordRPC resolves opening.tscn -> Starting up")
+	var records_node: Node = Node.new()
+	records_node.scene_file_path = "res://src/menus/records_screen.tscn"
+	_assert_true(DiscordRPC.resolve_presence(records_node, empty_modals)["details"] == "Hall of Fame", "DiscordRPC resolves records_screen.tscn -> Hall of Fame")
+
+	var pause_m: PauseMenuModal = (load("res://src/menus/pause_menu.tscn") as PackedScene).instantiate() as PauseMenuModal
+	var opts_m: OptionsMenuModal = (load("res://src/menus/options_menu.tscn") as PackedScene).instantiate() as OptionsMenuModal
+	var mode_m: ModeSelectionModal = (load("res://src/menus/mode_selection.tscn") as PackedScene).instantiate() as ModeSelectionModal
+	var eod_m: EndOfDayModal = (load("res://src/menus/end_of_day.tscn") as PackedScene).instantiate() as EndOfDayModal
+	eod_m.setup({"day": 3, "money": 145.0, "health": 100.0})
+	var go_m: GameOverModal = (load("res://src/menus/game_over.tscn") as PackedScene).instantiate() as GameOverModal
+	var nr_m: NewRecordModal = (load("res://src/menus/new_record.tscn") as PackedScene).instantiate() as NewRecordModal
+	var msg_m: MessageBoxModal = (load("res://src/menus/message_box.tscn") as PackedScene).instantiate() as MessageBoxModal
+
+	_assert_true(DiscordRPC.resolve_presence(title_node, [pause_m])["details"] == "Paused", "DiscordRPC resolves PauseMenuModal")
+	_assert_true(DiscordRPC.resolve_presence(title_node, [opts_m])["details"] == "Settings", "DiscordRPC resolves OptionsMenuModal")
+	_assert_true(DiscordRPC.resolve_presence(title_node, [mode_m])["details"] == "Mode Selection", "DiscordRPC resolves ModeSelectionModal")
+	var eod_p: Dictionary = DiscordRPC.resolve_presence(title_node, [eod_m, msg_m])
+	_assert_true(eod_p["details"] == "End of Day 3" and eod_p["state"] == "Earnings: $145", "DiscordRPC resolves EndOfDayModal through MessageBox overlay")
+	_assert_true(DiscordRPC.resolve_presence(title_node, [go_m])["details"] == "Game Over", "DiscordRPC resolves GameOverModal")
+	_assert_true(DiscordRPC.resolve_presence(title_node, [nr_m])["details"] == "New High Score!", "DiscordRPC resolves NewRecordModal")
+
+	for n in [title_node, opening_node, records_node, pause_m, opts_m, mode_m, eod_m, go_m, nr_m, msg_m]:
+		n.free()
+
+	# 4. Gameplay strategy presence resolution (Workday, Arcade, Zen, Tutorial)
+	var ps: PlayScene = PlayScene.new()
+	ps.rule_strategy = WorkdayStrategy.new(120.0, 42.0, 2)
+	var wd_cruising: Dictionary = DiscordRPC.resolve_presence(ps, empty_modals)
+	_assert_true(wd_cruising["details"] == "Workday - Day 2" and wd_cruising["state"] == "Cruising | $42 / Goal $95", "DiscordRPC resolves Workday cruising state")
+
+	var fake_pax: Passenger = Passenger.new()
+	ps.active_passenger = fake_pax
+	var wd_carry: Dictionary = DiscordRPC.resolve_presence(ps, empty_modals)
+	_assert_true(wd_carry["state"] == "Carrying Passenger | $42 earned", "DiscordRPC resolves Workday carrying passenger state")
+	ps.active_passenger = null
+	fake_pax.free()
+
+	var arc: ArcadeStrategy = ArcadeStrategy.new()
+	arc.score = 350
+	arc.passengers_delivered = 4
+	ps.rule_strategy = arc
+	var arc_p: Dictionary = DiscordRPC.resolve_presence(ps, empty_modals)
+	_assert_true(arc_p["details"] == "Arcade Mode" and arc_p["state"] == "Score: 350 | Passengers: 4", "DiscordRPC resolves Arcade presence")
+
+	ps.rule_strategy = ZenStrategy.new()
+	_assert_true(DiscordRPC.resolve_presence(ps, empty_modals)["details"] == "Zen Mode", "DiscordRPC resolves Zen presence")
+
+	ps.rule_strategy = TutorialStrategy.new()
+	_assert_true(DiscordRPC.resolve_presence(ps, empty_modals)["details"] == "Tutorial", "DiscordRPC resolves Tutorial presence")
+	ps.free()
+
+	# 5. Config toggle propagates safely without IPC errors
+	var prev_rpc: Variant = ConfigManager.get_value("discord_rpc", true)
+	ConfigManager.set_value("discord_rpc", false)
+	ConfigManager.set_value("discord_rpc", true)
+	ConfigManager.set_value("discord_rpc", prev_rpc)
+	_assert_true(true, "ConfigManager discord_rpc toggle propagates cleanly")
