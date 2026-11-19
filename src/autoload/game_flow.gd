@@ -254,6 +254,10 @@ func get_top_modal() -> Control:
 	return _modal_stack.back() as Control
 
 
+func get_modal_stack() -> Array[Control]:
+	return _modal_stack
+
+
 func has_modals() -> bool:
 	return not _modal_stack.is_empty()
 

@@ -22,6 +22,7 @@ ConfigManager="*res://src/autoload/config_manager.gd"
 I18n="*res://src/autoload/i18n.gd"
 AudioManager="*res://src/autoload/audio_manager.tscn"
 GameFlow="*res://src/autoload/game_flow.tscn"
+DiscordRPC="*res://src/autoload/discord_rpc.gd"
 
 [display]
 
