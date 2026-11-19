@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RadioStationDef" format=3]
+
+[ext_resource type="Script" path="res://src/data/radio_station_def.gd" id="1_5cmkp"]
+
+[resource]
+script = ExtResource("1_5cmkp")
+station_name = "98.2FM Smooth Jazz"
+genre = "jazz"
+vibe_color = Color(0.19607843, 0.39215687, 1, 1)
+track_paths = Array[String](["res://assets/music/jazz_1.ogg", "res://assets/music/jazz_2.ogg", "res://assets/music/jazz_3.ogg", "res://assets/music/jazz_4.ogg"])

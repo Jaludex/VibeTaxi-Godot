@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RadioStationDef" format=3]
+
+[ext_resource type="Script" path="res://src/data/radio_station_def.gd" id="1_gkjcb"]
+
+[resource]
+script = ExtResource("1_gkjcb")
+station_name = "107.9FM Electronic Dreamzzz"
+genre = "electronic"
+vibe_color = Color(0.19607843, 1, 1, 1)
+track_paths = Array[String](["res://assets/music/electronic_1.ogg", "res://assets/music/electronic_2.ogg", "res://assets/music/electronic_3.ogg", "res://assets/music/electronic_4.ogg", "res://assets/music/electronic_5.ogg"])

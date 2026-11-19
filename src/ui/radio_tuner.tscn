@@ -1,0 +1,83 @@
+[gd_scene format=3 uid="uid://bbkfgmcygnuif"]
+
+[ext_resource type="Script" uid="uid://bxcexk27ue65d" path="res://src/ui/radio_tuner.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://ch6ts6nv2esah" path="res://assets/graphics/radio.png" id="2"]
+[ext_resource type="Script" uid="uid://c41o545gs02th" path="res://src/data/radio_station_def.gd" id="2_heng8"]
+[ext_resource type="Texture2D" uid="uid://485qwd74lqv6" path="res://assets/graphics/marker.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://bjk7vqxy7a407" path="res://assets/graphics/button_radio.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://bl6vmxirbytxr" path="res://assets/graphics/button_plus.png" id="5"]
+[ext_resource type="Texture2D" uid="uid://cfbwkthq7pu2k" path="res://assets/graphics/button_less.png" id="6"]
+[ext_resource type="Resource" path="res://resources/radio/00_off.tres" id="7"]
+[ext_resource type="Resource" path="res://resources/radio/01_rock.tres" id="8"]
+[ext_resource type="Resource" path="res://resources/radio/02_pop.tres" id="9"]
+[ext_resource type="Resource" path="res://resources/radio/03_jazz.tres" id="10"]
+[ext_resource type="Resource" path="res://resources/radio/04_hiphop.tres" id="11"]
+[ext_resource type="Resource" path="res://resources/radio/05_electronic.tres" id="12"]
+
+[node name="RadioTuner" type="Control" unique_id=2006420810]
+layout_mode = 3
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = -64.0
+offset_right = 240.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("1")
+station_defs = Array[ExtResource("2_heng8")]([ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12")])
+
+[node name="Body" type="TextureRect" parent="." unique_id=1433684037]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 64.0
+mouse_filter = 2
+texture = ExtResource("2")
+
+[node name="Marker" type="TextureRect" parent="." unique_id=663724948]
+layout_mode = 0
+offset_left = 80.0
+offset_top = 24.0
+offset_right = 90.0
+offset_bottom = 55.0
+mouse_filter = 2
+texture = ExtResource("3")
+
+[node name="Knob" type="TextureRect" parent="." unique_id=1333520565]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 11.0
+offset_right = 56.0
+offset_bottom = 51.0
+pivot_offset = Vector2(20, 20)
+mouse_filter = 2
+texture = ExtResource("4")
+
+[node name="BtnPlus" type="Sprite2D" parent="." unique_id=1671520158]
+position = Vector2(445.5, 19)
+texture = ExtResource("5")
+hframes = 2
+
+[node name="BtnLess" type="Sprite2D" parent="." unique_id=1360944107]
+position = Vector2(444.5, 44)
+texture = ExtResource("6")
+hframes = 2
+
+[node name="StationLabel" type="Label" parent="." unique_id=1995589232]
+layout_mode = 0
+offset_left = 80.0
+offset_top = -1.0
+offset_right = 400.0
+offset_bottom = 19.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 14
+text = "off"
+horizontal_alignment = 1
+
+[node name="FadeTimer" type="Timer" parent="." unique_id=435794642]
+wait_time = 2.0
+one_shot = true

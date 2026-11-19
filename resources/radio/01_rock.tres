@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RadioStationDef" format=3]
+
+[ext_resource type="Script" path="res://src/data/radio_station_def.gd" id="1_ymnse"]
+
+[resource]
+script = ExtResource("1_ymnse")
+station_name = "87.5FM Rock For Life"
+genre = "rock"
+vibe_color = Color(1, 0.19607843, 0.19607843, 1)
+track_paths = Array[String](["res://assets/music/rock_1.ogg", "res://assets/music/rock_2.ogg", "res://assets/music/rock_3.ogg", "res://assets/music/rock_4.ogg", "res://assets/music/rock_5.ogg"])

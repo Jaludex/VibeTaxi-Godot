@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="VehicleDef" format=3]
+
+[ext_resource type="Script" path="res://src/data/vehicle_def.gd" id="1_gfcbq"]
+
+[resource]
+script = ExtResource("1_gfcbq")
+id = "civilian_6"
+frame_index = 6
+max_speed = 175.0
+acceleration = 75.0
+turn_speed = 3.4
+base_health = 95.0

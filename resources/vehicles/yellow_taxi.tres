@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="VehicleDef" format=3]
+
+[ext_resource type="Script" path="res://src/data/vehicle_def.gd" id="1_fb7a5"]
+
+[resource]
+script = ExtResource("1_fb7a5")
+base_health = 140.0

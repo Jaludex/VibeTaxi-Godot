@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RadioStationDef" format=3]
+
+[ext_resource type="Script" path="res://src/data/radio_station_def.gd" id="1_brig2"]
+
+[resource]
+script = ExtResource("1_brig2")
+station_name = "93.8FM Non-Stop-Pop"
+genre = "pop"
+vibe_color = Color(1, 0.4117647, 0.7058824, 1)
+track_paths = Array[String](["res://assets/music/pop_1.ogg", "res://assets/music/pop_2.ogg", "res://assets/music/pop_3.ogg", "res://assets/music/pop_4.ogg", "res://assets/music/pop_5.ogg"])

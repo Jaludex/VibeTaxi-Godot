@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RadioStationDef" format=3]
+
+[ext_resource type="Script" path="res://src/data/radio_station_def.gd" id="1_xhlfy"]
+
+[resource]
+script = ExtResource("1_xhlfy")
+station_name = "101.2FM Hip-Hop Tunes"
+genre = "hiphop"
+vibe_color = Color(1, 0.78431374, 0, 1)
+track_paths = Array[String](["res://assets/music/hiphop_1.ogg", "res://assets/music/hiphop_2.ogg", "res://assets/music/hiphop_3.ogg"])

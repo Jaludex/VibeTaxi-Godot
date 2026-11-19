@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="VehicleDef" format=3]
+
+[ext_resource type="Script" path="res://src/data/vehicle_def.gd" id="1_yusli"]
+
+[resource]
+script = ExtResource("1_yusli")
+id = "civilian_3"
+frame_index = 3
+max_speed = 170.0
+acceleration = 75.0
+turn_speed = 3.2
+base_health = 90.0

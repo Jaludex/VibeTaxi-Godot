@@ -1,0 +1,296 @@
+keys,en,es
+language_name,English,Español
+game_title,Vibe Taxi,Vibe Taxi
+version,Version {version},Versión {version}
+fullscreen_hint,F11 for Fullscreen,F11 para Pantalla Completa
+btn_new_game,New Game,Nueva Partida
+btn_resume_work_day,Resume Work. Day: {day},Reanudar Jornada. Día: {day}
+btn_resume_work,Resume Work,Reanudar Jornada
+btn_records,Records,Puntuaciones
+btn_credits,Credits,Créditos
+btn_quit_game,Quit Game,Salir del Juego
+btn_user_tracks,User Tracks,Música Propia
+btn_language,Language,Idioma
+btn_tutorial,Tutorial,Tutorial
+btn_workday,Workday,Jornada
+btn_arcade,Arcade,Arcade
+btn_zen,Zen,Zen
+btn_yes,Yes,Sí
+btn_no,No,No
+btn_ok,OK,Aceptar
+btn_next,Next,Siguiente
+btn_resume,Continue,Continuar
+btn_exit_menu,Main Menu,Menú Principal
+btn_quit_desktop,Quit Game,Salir al Escritorio
+btn_repair_taxi,Repair Taxi,Reparar Taxi
+btn_repair_taxi_cost,Repair - ${cost},Reparar - ${cost}
+btn_save_quit,Save & Exit,Guardar y Salir
+btn_continue,Continue,Continuar
+btn_submit,Save,Guardar
+btn_back,Back,Volver
+btn_options,Options,Opciones
+options_title,Options,Opciones
+tab_audio,Audio,Audio
+tab_game,Game,Juego
+opt_master,Master Volume,Volumen Maestro
+opt_music,Music,Música
+opt_sfx,Sound Effects,Efectos
+opt_engine,Engine,Motor
+opt_ambient,Ambience,Ambiente
+opt_fullscreen,Fullscreen,Pantalla Completa
+opt_deadzone,Deadzone,Zona Muerta
+opt_show_fps,Show FPS,Mostrar FPS
+opt_debug_visuals,Debug Visuals,Visuales Debug
+opt_pause_on_focus_loss,Pause on Focus Loss,Pausar al Perder Foco
+opt_discord_rpc,Discord Presence,Presencia en Discord
+opt_fps_limit,FPS,FPS
+fps_auto,Auto,Auto
+fps_uncapped,Unlimited,Ilimitado
+btn_reset_defaults,Reset Defaults,Restablecer
+msg_user_tracks_title,User Tracks,Música Propia
+msg_user_tracks_info,"You can add your own music
+tracks to the game!
+After this message, a folder will
+open where you can place your files.
+The game supports .mp3, .ogg and .wav files.
+After adding songs, restart the game
+to load them.
+By adding music to this folder, you confirm
+you have the rights or licenses to use it.
+The developers assume no liability for copyrighted content.","¡Puedes añadir tu propia música
+al juego!
+Después de este mensaje, se abrirá una
+carpeta donde puedes poner tus archivos.
+El juego soporta archivos .mp3, .ogg y .wav.
+Después de añadir canciones, reinicia el juego
+para cargarlas.
+Al añadir música a esta carpeta, confirmas
+que tienes los derechos o licencias para usarla.
+Los desarrolladores no asumen responsabilidad por contenido con derechos de autor."
+msg_credits_title,Credits,Créditos
+msg_credits_text,"VIBE TAXI
+Originally made with Gale & Pygame, ported to Godot 4.
+As Project in the course of
+Videogame Programming I (ULA)
+Development & Design:
+Jesus Leon (Jaludex)
+Zadkiel Jimenez (Eltoti)
+
+Music & Sound Effects:
+opengameart.org
+pixabay.com
+Text blips by dmochas on itch.io
+Graphical Assets:
+Radio, indicator arrow and passenger UI by Eltoti
+City Assets by nyknck on itch.io
+Peds texture by vimlark on itch.io
+Fonts:
+Google Fonts
+
+Thanks for playing our game!
+Hope you enjoy it and have a good time!","VIBE TAXI
+Originalmente hecho con Gale y Pygame, portado a Godot 4.
+Como Proyecto en el curso de
+Programación de Videojuegos I (ULA)
+Desarrollo y Diseño:
+Jesús León (Jaludex)
+Zadkiel Jiménez (Eltoti)
+
+Música y Efectos de Sonido:
+opengameart.org
+pixabay.com
+Pitidos de texto por dmochas en itch.io
+Recursos Gráficos:
+Interfaz de radio, flecha indicadora y pasajeros por Eltoti
+Recursos de Ciudad por nyknck en itch.io
+Textura de peatones por vimlark en itch.io
+Fuentes:
+Google Fonts
+
+¡Gracias por jugar nuestro juego!
+¡Esperamos que lo disfrutes y pases un buen rato!"
+msg_lang_title,Select Language,Seleccionar Idioma
+mode_selection_title,Select Mode,Seleccionar Modo
+mode_tutorial_desc,Learn the basics of the game,Aprende los conceptos básicos del juego
+mode_workday_desc,Win money with each trip. Use it to repair your car.,Gana dinero con cada viaje. Úsalo para reparar tu auto.
+mode_arcade_desc,Win as many trips as you can before time runs out,Completa la mayor cantidad de viajes antes de que se acabe el tiempo.
+mode_zen_desc,"No damage, no limits. Just chill and drive.","Sin daños, sin límites. Solo relájate y conduce."
+mode_workday_initial_text,"Day {day}
+Today's fee: ${fee}","Día {day}
+Pago de hoy: ${fee}"
+mode_arcade_initial_text,Go get them!,¡Empieza a recoger clientes!
+mode_zen_initial_text,Relax and enjoy the ride.,Relájate y disfruta el viaje.
+records_title,Hall of Fame,Salón de la Fama
+records_workday_format,{i}. {name} - Day {score},{i}. {name} - Día {score}
+records_arcade_format,{i}. {name} - {score} pts,{i}. {name} - {score} pts
+pause_title,Paused,Pausa
+game_over_title,Game Over,Fin del Juego
+game_over_time_up,Time is up!,¡Se acabó el tiempo!
+game_over_destroyed,Your taxi was destroyed!,¡Tu taxi fue destruido!
+game_over_fee_failed,You couldn't pay today's fee: ${fee},No pudiste pagar la cuota de hoy: ${fee}
+game_over_money,Money Made: ${score},Dinero Ganado: ${score}
+game_over_pax,Passengers: {score},Pasajeros: {score}
+end_of_day_title_format,End of Day {day},Fin del Día {day}
+end_of_day_money,Money Left: ${money},Dinero Restante: ${money}
+new_record_title,New Record!,¡Nuevo Récord!
+new_record_score,Score: {score},Puntuación: {score}
+confirm_overwrite,Overwrite existing save?,¿Sobrescribir partida existente?
+hud_score_label,SCORE,PUNTOS
+hud_score_value,{score},{score}
+hud_money_label,MONEY,DINERO
+hud_money_value,${money},${money}
+hud_danger,Danger!,¡Peligro!
+hud_time,TIME,TIEMPO
+bonus_fast,Fast!,¡Rápido!
+bonus_safe,Safe!,¡Seguro!
+hud_tutorial,TUTORIAL,TUTORIAL
+hud_zen,ZEN,ZEN
+game_over_rank_label,RANK,RANGO
+confirm_quit,Are you sure you want to quit?,¿Estás seguro de que quieres salir?
+tutorial_title,Tutorial,Tutorial
+tutorial_start_text,Welcome to the tutorial!,¡Bienvenido al tutorial!
+tutorial_completed_title,Tutorial Completed!,¡Tutorial Completado!
+tutorial_completed_msg,You have completed the tutorial. Ready for the real work!,¡Has completado el tutorial! Listo para el trabajo real.
+tutorial_msg_welcome,Welcome to VibeTaxi! You will become the best taxi driver by finding the music your passengers love. Use {drive_btn} to accelerate.,"Bienvenido a VibeTaxi, en este juego te convertirás en el mejor taxista encontrando la música que les encanta a tus pasajeros. Usa {drive_btn} para acelerar."
+tutorial_msg_controls,Try moving around this area. Use {steer_btn} to steer and {brake_btn} to brake/reverse. Pause with {pause_btn}.,Intenta moverte por esta zona. Usa {steer_btn} para girar y {brake_btn} para frenar/reversa. Pausa con {pause_btn}.
+tutorial_msg_pickup,"Now try picking up that client. Get close to him and brake, then take him to his destination.","Ahora intenta recoger a ese cliente. Acércate a él y frena, luego llévalo a su destino."
+tutorial_msg_radio,"Now lets try with this another client, listen to him. Use {radio_station} to change the radio station and {radio_vol} to adjust volume. Try playing something he/she likes.","Ahora probemos con este otro cliente, escúchalo. Usa {radio_station} para cambiar la estación de radio y {radio_vol} para el volumen. Intenta poner algo que le guste."
+tutorial_msg_obstacles,"Now try getting to the end of this section, try avoiding the cones and traffic and get the client to his destination. Good Luck!","Ahora intenta llegar al final de esta sección, esquivando los conos y el tráfico y llevando al cliente a su destino. ¡Buena suerte!"
+tutorial_msg_vibe,"Great, you're in Vibe Mode, now you can drift to keep your speed. Drift with {drift_btn}.","Genial, estás en Modo Vibe, ahora puedes derrapar para mantener tu velocidad. Derrapa con {drift_btn}."
+input_mouse_drive,Left Click,el Clic Izquierdo
+input_mouse_steer,the Mouse Cursor,el Cursor del Ratón
+input_key_drive,the Arrow Keys,las Flechas
+input_key_steer,the Arrow Keys,las Flechas
+input_pad_drive,the Left Stick,el Stick Izquierdo
+input_pad_steer,the Left Stick,el Stick Izquierdo
+input_kb_brake,"""X""","""X"""
+input_kb_pause,ESC,ESC
+input_kb_radio_vol,W/S,W/S
+input_kb_radio_station,A/D,A/D
+input_kb_drift,SHIFT,SHIFT
+input_pad_brake,L2/LT,L2/LT
+input_pad_pause,START,START
+input_pad_radio_vol,D-PAD Up/Down,la Cruceta Arriba/Abajo
+input_pad_radio_station,L1/R1 RB/LB,L1/R1 RB/LB
+input_pad_drift,R2/RT,R2/RT
+tutorial_integrated_welcome,"Welcome to VibeTaxi! Steer with your mouse cursor and hold left-click to drive. Press 'X' to brake and reverse.
+
+Follow the navigation arrow to the nearest client and brake to pick them up!","¡Bienvenido a VibeTaxi! Dirige con el cursor del ratón y mantén clic izquierdo para acelerar. Presiona 'X' para frenar y reversa.
+
+¡Sigue la flecha de navegación hasta el cliente más cercano y frena para recogerlo!"
+tutorial_integrated_radio,"You picked up a client! Check their music taste in the bottom HUD.
+
+Use WASD to change radio stations and volume. Playing what they love fills their Vibe!
+
+Now follow the arrow to their destination.","¡Recogiste a un cliente! Revisa sus gustos musicales en la barra inferior.
+
+Usa WASD para cambiar de estación y ajustar el volumen. ¡Poner la música que le gusta aumentará su Vibe!
+
+Ahora sigue la flecha hasta su destino."
+tutorial_integrated_vibe,"Awesome, you're in Vibe Mode! While in Vibe Mode, hold SHIFT to drift through corners and keep your speed without losing control.","¡Excelente, estás en Modo Vibe! En Modo Vibe, mantén SHIFT para derrapar en las curvas y mantener tu velocidad."
+tutorial_integrated_complete,"Great job delivering your passenger! You've learned all the basics of VibeTaxi.
+
+Now continue your run and keep the music flowing!","¡Gran trabajo entregando a tu pasajero! Ya conoces lo básico de VibeTaxi.
+
+¡Continúa tu partida y mantén la buena música sonando!"
+dlg_enter_0,"Hi! Take me to {destination}, please.","¡Hola! Llévame a {destination}, por favor."
+dlg_enter_1,"Hey boss. Let's go to {destination}, I'm in a hurry.","Qué tal jefe. Vamos a {destination}, tengo prisa."
+dlg_enter_2,Hello there. I need to get to {destination}.,Hola. Necesito llegar a {destination}.
+dlg_enter_3,Good day. Drop me off at {destination}.,Buen día. Déjeme en {destination}.
+dlg_enter_4,"Yo. To {destination}, step on it!","Oye. A {destination}, ¡acelera!"
+dlg_hints_rock_0,I need some loud guitars to wake me up.,Necesito unas guitarras ruidosas para despertar.
+dlg_hints_rock_1,"Put on something heavy, man.","Pon algo pesado, amigo."
+dlg_hints_rock_2,Got any classic rock?,¿Tienes algo de rock clásico?
+dlg_hints_rock_3,I feel like headbanging right now.,Me apetece mover la cabeza con el ritmo un rato.
+dlg_hints_rock_4,I need some distortion and a good guitar solo.,Necesito algo de distorsión y un buen solo de guitarra.
+dlg_hints_rock_5,"Let's hear some riffs, driver.","A ver esos riffs, conductor."
+dlg_hints_rock_6,"I want to listen to a real band, not a computer.","Quiero escuchar una banda real, no una computadora."
+dlg_hints_pop_0,I want to listen to something catchy.,Quiero escuchar algo pegadizo.
+dlg_hints_pop_1,"Put on the top hits, please.","Pon los éxitos del momento, por favor."
+dlg_hints_pop_2,I need some upbeat vocals to sing along to.,Necesito una voz alegre para cantar a la par.
+dlg_hints_pop_3,Got any mainstream pop?,¿Tienes algo de pop comercial?
+dlg_hints_pop_4,I'm in the mood for something fun and popular.,Estoy de humor para algo divertido y popular.
+dlg_hints_pop_5,Play something everyone knows the lyrics to.,Pon algo de lo que todos se sepan la letra.
+dlg_hints_pop_6,I love chart-topping tracks.,Me encantan las canciones que son número uno.
+dlg_hints_jazz_0,I need something smooth and relaxing.,Necesito algo suave y relajante.
+dlg_hints_jazz_1,Got any saxophones on the radio?,¿Hay algún saxofón en la radio?
+dlg_hints_jazz_2,I'd love some nice background piano or jazz.,Me encantaría un buen piano de fondo o jazz.
+dlg_hints_jazz_3,Put on some jazz if you have it.,Pon algo de jazz si tienes.
+dlg_hints_jazz_4,I want to vibe to some old rhythms.,Quiero disfrutar de unos ritmos antiguos.
+dlg_hints_jazz_5,Let's listen to some jazzy tunes.,Escuchemos algunas melodías de jazz.
+dlg_hints_jazz_6,Nothing beats a good brass section.,No hay nada como una buena sección de vientos.
+dlg_hints_hiphop_0,"Put on some beats, driver.","Pon unos buenos beats, conductor."
+dlg_hints_hiphop_1,I need some sick rhymes to get hyped.,Necesito unas buenas rimas para animarme.
+dlg_hints_hiphop_2,Got any rap stations?,¿Tienes alguna emisora de rap?
+dlg_hints_hiphop_3,Let's listen to some hip-hop.,Escuchemos algo de hip-hop.
+dlg_hints_hiphop_4,Turn up the bass and put on some MCs.,Sube los bajos y pon a algunos MCs.
+dlg_hints_hiphop_5,I want to hear some good flow.,Quiero escuchar un buen flow.
+dlg_hints_hiphop_6,Play some urban tracks.,Pon algunas pistas urbanas.
+dlg_hints_electronic_0,I want to hear some heavy synths.,Quiero escuchar unos buenos sintetizadores.
+dlg_hints_electronic_1,"Put on some EDM or techno, please.","Pon algo de EDM o techno, por favor."
+dlg_hints_electronic_2,I need a fast BPM to get going.,Necesito un BPM rápido para activarme.
+dlg_hints_electronic_3,Got any club music?,¿Tienes música de club?
+dlg_hints_electronic_4,I want to feel like I'm in a club.,Quiero sentir que estoy en una discoteca.
+dlg_hints_electronic_5,Man i love Synths,"Amigo, me encantan los sintetizadores."
+dlg_hints_electronic_6,I need some electronic dance tracks.,Necesito unas buenas pistas de electrónica para bailar.
+dlg_reaction_good_0,This song is amazing!,¡Esta canción es increíble!
+dlg_reaction_good_1,What a track! Turn it up.,¡Qué temazo! Súbele al volumen.
+dlg_reaction_good_2,You have great taste in music.,Tienes un gusto musical excelente.
+dlg_reaction_good_3,This is exactly what I wanted to hear.,Esto es exactamente lo que quería escuchar.
+dlg_reaction_good_4,"Awesome vibes, driver!","¡Excelentes vibras, conductor!"
+dlg_reaction_neutral_0,...,...
+dlg_reaction_neutral_1,"You can leave this on, it's fine.","Puedes dejar esto, está bien."
+dlg_reaction_neutral_2,This song is okay.,Esta canción está pasable.
+dlg_reaction_neutral_3,"Not my favorite, but not bad.","No es mi favorita, pero no está mal."
+dlg_reaction_neutral_4,I don't mind this track.,No me molesta esta canción.
+dlg_reaction_bad_0,Hey! Be more careful!,Ey! Ten mas cuidado!
+dlg_reaction_bad_1,My head hurts.,Me duele la cabeza.
+dlg_reaction_bad_2,"You're not carrying potatos, are you?",No estas llevando papas ¿Verdad?
+dlg_reaction_bad_3,I can't stand this shaking,No aguanto este ajetreo
+dlg_reaction_bad_4,"Wait a minute, are you drunk?","Espera un momento, ¿Estás borracho?"
+dlg_exit_good_0,"Excellent service, 5 stars!","¡Excelente servicio, 5 estrellas!"
+dlg_exit_good_1,"Thank you, that was a very pleasant ride.","Gracias, fue un viaje muy agradable."
+dlg_exit_good_2,See ya! Thanks for the good vibes!,¡Nos vemos! ¡Gracias por la buena vibra!
+dlg_exit_good_3,"Perfect driving, keep it up.","Conducción perfecta, sigue así."
+dlg_exit_good_4,I'll definitely recommend this taxi.,Definitivamente recomendaré este taxi.
+dlg_exit_bad_0,Terrible ride. I'm disgusted.,Viaje terrible. Estoy indignado.
+dlg_exit_bad_1,I am never getting in this taxi again.,No me vuelvo a subir a este taxi.
+dlg_exit_bad_2,"Finally we arrived, what a torture...","Al fin llegamos, qué tortura..."
+dlg_exit_bad_3,Worst cab experience of my life.,La peor experiencia en taxi de mi vida.
+dlg_exit_bad_4,You're not getting a tip for this.,No te daré propina por esto.
+opt_touch_controls,Touch Controls,Controles Táctiles
+opt_touch_mode,Touch: {mode},Táctil: {mode}
+touch_mode_joystick,Joystick,Joystick
+touch_mode_drag,Follow Finger,Seguir Dedo
+touch_brake,BRK,FRN
+touch_drift,DRIFT,DRIFT
+touch_radio,FM,FM
+input_touch_joy_drive,the Virtual Joystick,el Joystick Virtual
+input_touch_joy_steer,the Virtual Joystick,el Joystick Virtual
+input_touch_drag_drive,Dragging Your Finger,Arrastrar el Dedo
+input_touch_drag_steer,Dragging Your Finger,Arrastrar el Dedo
+input_touch_brake,the BRK Button,el Botón FRN
+input_touch_pause,the Pause Button,el Botón de Pausa
+input_touch_radio_vol,the +/- Buttons,los Botones +/-
+input_touch_radio_station,the < / > Buttons,los Botones < / >
+input_touch_drift,the DRIFT Button,el Botón DRIFT
+tutorial_integrated_welcome_touch_joy,"Welcome to VibeTaxi! Use the virtual joystick on the left to drive and steer. Tap BRK to brake and reverse.
+
+Follow the navigation arrow to the nearest client and brake to pick them up!","¡Bienvenido a VibeTaxi! Usa el joystick virtual a la izquierda para acelerar y girar. Toca FRN para frenar y reversa.
+
+¡Sigue la flecha de navegación hasta el cliente más cercano y frena para recogerlo!"
+tutorial_integrated_welcome_touch_drag,"Welcome to VibeTaxi! Drag your finger anywhere to steer and accelerate toward it. Tap BRK to brake and reverse.
+
+Follow the navigation arrow to the nearest client and brake to pick them up!","¡Bienvenido a VibeTaxi! Arrastra tu dedo para acelerar y girar hacia él. Toca FRN para frenar y reversa.
+
+¡Sigue la flecha de navegación hasta el cliente más cercano y frena para recogerlo!"
+tutorial_integrated_radio_touch,"You picked up a client! Check their music taste in the bottom HUD.
+
+Use the < / > arrows above Drift and Brake to change radio stations. Playing what they love fills their Vibe!
+
+Now follow the arrow to their destination.","¡Recogiste a un cliente! Revisa sus gustos musicales en la barra inferior.
+
+Usa las flechas < / > sobre Drift y Freno para cambiar de estación. ¡Poner la música que le gusta aumentará su Vibe!
+
+Ahora sigue la flecha hasta su destino."
+tutorial_integrated_vibe_touch,"Awesome, you're in Vibe Mode! While in Vibe Mode, hold the DRIFT button to drift through corners and keep your speed without losing control.","¡Excelente, estás en Modo Vibe! En Modo Vibe, mantén el botón DRIFT para derrapar en las curvas y mantener tu velocidad."
