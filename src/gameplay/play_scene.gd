@@ -11,12 +11,7 @@ const PASSENGER_SCENE: PackedScene = preload("res://src/entities/passenger.tscn"
 @onready var _camera: CameraRig = $CameraRig
 @onready var _hud_layer: CanvasLayer = $HUDLayer
 @onready var _vibe_tint: ColorRect = $HUDLayer/VibeTint
-@onready var _taximeter_box: Control = $HUDLayer/TaximeterBox
-@onready var _time_title: Label = $HUDLayer/TaximeterBox/TaximeterSprite/TimeTitle
-@onready var _time_value: Label = $HUDLayer/TaximeterBox/TaximeterSprite/TimeValue
-@onready var _counter_value: Label = $HUDLayer/TaximeterBox/CounterValue
-@onready var _counter_label: Label = $HUDLayer/TaximeterBox/CounterLabel
-@onready var _side_popup: Label = $HUDLayer/TaximeterBox/SidePopup
+@onready var _taximeter: Taximeter = $HUDLayer/Taximeter
 @onready var _mode_badge: Label = $HUDLayer/ModeBadge
 @onready var _center_popup: Label = $HUDLayer/CenterPopup
 @onready var _danger_label: Label = $HUDLayer/DangerLabel
@@ -43,11 +38,6 @@ var _last_checkpoint: Vector2 = Vector2.ZERO
 var _tutorial_paused: bool = false
 var _tutorial_completed: bool = false
 
-var _display_counter: float = 0.0
-var _counter_is_money: bool = false
-var _counter_format_key: String = ""
-var _counter_param: String = ""
-
 var _game_over_triggered: bool = false
 var _was_vibe: bool = false
 var _danger_timer: float = 0.0
@@ -65,7 +55,6 @@ func _ready() -> void:
 func _setup_fonts() -> void:
 	_hud_layer.visible = true
 	_danger_label.text = I18n.t("hud_danger")
-	_time_title.text = I18n.t("hud_time")
 
 
 func _initialize_run(params: Dictionary) -> void:
@@ -151,7 +140,7 @@ func _initialize_run(params: Dictionary) -> void:
 
 
 func _setup_hud_for_rule() -> void:
-	_taximeter_box.visible = rule_strategy.has_timer
+	_taximeter.visible = rule_strategy.has_timer
 	_mode_badge.visible = not rule_strategy.has_timer
 	if _mode_badge.visible:
 		if rule_strategy is ZenStrategy:
@@ -161,16 +150,7 @@ func _setup_hud_for_rule() -> void:
 			_mode_badge.text = I18n.t("hud_tutorial")
 			_mode_badge.add_theme_color_override("font_color", Color(0.39, 1.0, 1.0))
 
-	var info: Dictionary = rule_strategy.get_hud_counter_text()
-	if not info.is_empty():
-		_display_counter = float(info["value"])
-		_counter_is_money = bool(info["is_money"])
-		_counter_format_key = str(info["format_key"])
-		_counter_param = str(info["param"])
-		_counter_label.text = str(info["label"])
-		_counter_value.add_theme_color_override("font_color", info["color"] as Color)
-		_counter_label.add_theme_color_override("font_color", info["color"] as Color)
-		_refresh_counter_label()
+	_taximeter.configure_counter(rule_strategy.get_hud_counter_text())
 
 
 func _play_intro_banner() -> void:
@@ -369,35 +349,11 @@ func _apply_delivery_feedback(reward: Dictionary) -> void:
 	if bool(reward.get("bonus", false)):
 		AudioManager.play_sfx("bonus")
 	if reward.has("tween_target"):
-		var target_val: float = float(reward["tween_target"])
-		var tween: Tween = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		tween.tween_method(func(v: float) -> void:
-			_display_counter = v
-			_refresh_counter_label()
-		, _display_counter, target_val, 1.0)
+		_taximeter.tween_counter_to(float(reward["tween_target"]))
 	if reward.has("side_popup"):
-		_show_side_popup(str(reward["side_popup"]), reward.get("side_color", Color.GREEN) as Color)
+		_taximeter.show_side_popup(str(reward["side_popup"]), reward.get("side_color", Color.GREEN) as Color)
 	if reward.has("center_popup"):
 		_show_center_popup(str(reward["center_popup"]), reward.get("center_color", GameConstants.UI_GOLD) as Color)
-
-
-func _refresh_counter_label() -> void:
-	if _counter_format_key.is_empty():
-		return
-	var formatted_val: String = ("%.2f" % _display_counter) if _counter_is_money else str(int(round(_display_counter)))
-	_counter_value.text = I18n.t(_counter_format_key, {_counter_param: formatted_val})
-
-
-func _show_side_popup(text: String, color: Color) -> void:
-	_side_popup.text = text
-	_side_popup.add_theme_color_override("font_color", color)
-	_side_popup.position = Vector2(78.0, 45.0)
-	_side_popup.modulate.a = 0.0
-	var tween: Tween = create_tween()
-	tween.tween_property(_side_popup, "modulate:a", 1.0, 0.3)
-	tween.parallel().tween_property(_side_popup, "position:y", 25.0, 0.3).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_interval(1.0)
-	tween.tween_property(_side_popup, "modulate:a", 0.0, 0.5)
 
 
 func _show_center_popup(text: String, color: Color) -> void:
@@ -412,11 +368,7 @@ func _show_center_popup(text: String, color: Color) -> void:
 
 func _update_hud_displays(delta: float) -> void:
 	if rule_strategy.has_timer:
-		var t_rem: int = int(rule_strategy.time_remaining)
-		@warning_ignore("integer_division")
-		var mins: int = t_rem / 60
-		var secs: int = t_rem % 60
-		_time_value.text = "%02d:%02d" % [mins, secs]
+		_taximeter.set_time_remaining(rule_strategy.time_remaining)
 
 	if taxi.is_vibe_mode():
 		var genre: String = _radio.get_current_genre()

@@ -518,3 +518,16 @@ func _test_discord_rpc() -> void:
 	ConfigManager.set_value("discord_rpc", true)
 	ConfigManager.set_value("discord_rpc", prev_rpc)
 	_assert_true(true, "ConfigManager discord_rpc toggle propagates cleanly")
+
+	# 6. Extracted Taximeter scene works standalone and preserves custom SidePopup position
+	var tm: Taximeter = (load("res://src/ui/taximeter.tscn") as PackedScene).instantiate() as Taximeter
+	add_child(tm)
+	tm.set_time_remaining(75.0)
+	_assert_true(tm._time_value.text == "01:15", "Taximeter formats remaining time as MM:SS")
+	var ws_tm: WorkdayStrategy = WorkdayStrategy.new(120.0, 25.5, 1)
+	tm.configure_counter(ws_tm.get_hud_counter_text())
+	_assert_true(tm._counter_value.text.contains("25.50"), "Taximeter configures counter from rule strategy")
+	tm._side_popup_base_pos = Vector2(92.0, 50.0)
+	tm.show_side_popup("+$15", Color.GREEN)
+	_assert_true(tm._side_popup.position == Vector2(92.0, 50.0), "Taximeter SidePopup starts from its editor base position")
+	tm.queue_free()
