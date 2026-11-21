@@ -139,10 +139,19 @@ func _paginate_text(raw_text: String) -> Array[String]:
 	var pages: Array[String] = []
 	var idx: int = 0
 	while idx < wrapped_lines.size():
-		var end_idx: int = mini(idx + lines_per_page, wrapped_lines.size())
+		while idx < wrapped_lines.size() and wrapped_lines[idx].is_empty():
+			idx += 1
+		if idx >= wrapped_lines.size():
+			break
+		var raw_end: int = mini(idx + lines_per_page, wrapped_lines.size())
+		var end_idx: int = raw_end
+		while end_idx > idx and wrapped_lines[end_idx - 1].is_empty():
+			end_idx -= 1
 		var chunk: PackedStringArray = PackedStringArray()
 		for j in range(idx, end_idx):
 			chunk.append(wrapped_lines[j])
 		pages.append("\n".join(chunk))
-		idx = end_idx
+		idx = raw_end
+	if pages.is_empty():
+		pages.append("")
 	return pages
