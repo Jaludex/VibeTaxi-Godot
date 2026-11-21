@@ -551,3 +551,22 @@ func _test_discord_rpc() -> void:
 	tw.set_box_text("Line 1\nLine 2\nLine 3\n\nLine 4\nLine 5")
 	_assert_true(tw._pages.size() == 2 and not tw._pages[1].begins_with("\n") and tw._pages[1].begins_with("Line 4"), "TypewriterBox omits leading blank lines on new pages")
 	tw.queue_free()
+
+	# 8. First-launch tutorial defaults ON, persists toggle, and applies to workday/arcade/zen
+	var prev_tut: bool = bool(ConfigManager.get_value("tutorial_enabled", true))
+	_assert_true(bool(ConfigManager.DEFAULTS["tutorial_enabled"]) == true, "ConfigManager defaults tutorial_enabled to true on first launch")
+	GameFlow.set_tutorial_enabled(true)
+	var title_sc: Node = (load("res://src/menus/title_screen.tscn") as PackedScene).instantiate()
+	add_child(title_sc)
+	var btn_tut: Button = title_sc.get_node("UILayer/ButtonsRoot/BtnTutorial") as Button
+	_assert_true(btn_tut.theme_type_variation == &"ActiveButton", "TitleScreen highlights Tutorial button when tutorial_enabled is true")
+	title_sc.queue_free()
+
+	for m in ["workday", "arcade", "zen"]:
+		GameFlow.pending_play_params = {"mode": m, "tutorial_mode": GameFlow.tutorial_enabled and (m in ["workday", "arcade", "zen"])}
+		var ps_m: PlayScene = (load("res://src/gameplay/play_scene.tscn") as PackedScene).instantiate() as PlayScene
+		add_child(ps_m)
+		_assert_true(ps_m.tutorial_mode, "PlayScene enables integrated tutorial_mode in %s when tutorial_enabled is true" % m)
+		ps_m.queue_free()
+
+	GameFlow.set_tutorial_enabled(prev_tut)

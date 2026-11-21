@@ -4,7 +4,7 @@ extends Node
 
 signal input_device_changed(device: String)
 
-var tutorial_enabled: bool = false
+var tutorial_enabled: bool = true
 var last_input_device: String = "mouse"
 var pending_play_params: Dictionary = {}
 
@@ -17,6 +17,7 @@ var _is_transitioning: bool = false
 
 
 func _ready() -> void:
+	tutorial_enabled = bool(ConfigManager.get_value("tutorial_enabled", true))
 	_ensure_ui_joypad_bindings()
 	ConfigManager.config_changed.connect(_on_config_changed)
 	get_tree().node_added.connect(_on_tree_node_added)
@@ -197,10 +198,15 @@ func change_scene(scene_path: String, fade_out_sec: float = 0.5, fade_in_sec: fl
 	_is_transitioning = false
 
 
+func set_tutorial_enabled(enabled: bool) -> void:
+	tutorial_enabled = enabled
+	ConfigManager.set_value("tutorial_enabled", enabled, true)
+
+
 func start_gameplay(mode: String, extra_params: Dictionary = {}) -> void:
 	pending_play_params = extra_params.duplicate(true)
 	pending_play_params["mode"] = mode
-	pending_play_params["tutorial_mode"] = tutorial_enabled and (mode == "workday" or mode == "arcade")
+	pending_play_params["tutorial_mode"] = tutorial_enabled and (mode in ["workday", "arcade", "zen"])
 	await change_scene("res://src/gameplay/play_scene.tscn", 0.6, 0.0)
 
 
