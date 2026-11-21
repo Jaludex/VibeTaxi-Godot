@@ -180,7 +180,7 @@ func _on_quit() -> void:
 
 func _on_toggle_tutorial() -> void:
 	AudioManager.play_sfx("press")
-	GameFlow.tutorial_enabled = not GameFlow.tutorial_enabled
+	GameFlow.set_tutorial_enabled(not GameFlow.tutorial_enabled)
 	_btn_tutorial.theme_type_variation = &"ActiveButton" if GameFlow.tutorial_enabled else &""
 
 

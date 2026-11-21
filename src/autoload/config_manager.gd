@@ -22,6 +22,7 @@ const DEFAULTS: Dictionary = {
 	"fps_limit": 60,
 	"touch_mode": "joystick",
 	"touch_controls": false,
+	"tutorial_enabled": true,
 }
 
 var _data: Dictionary = {}
@@ -83,9 +84,11 @@ func reset_defaults() -> void:
 	var current_lang: String = str(get_value("language", "es"))
 	if current_lang.is_empty():
 		current_lang = "es"
+	var current_tut: bool = bool(get_value("tutorial_enabled", false))
 	_data = DEFAULTS.duplicate(true)
 	_data["touch_controls"] = _is_touch_platform_default()
 	_data["language"] = current_lang
+	_data["tutorial_enabled"] = current_tut
 	apply_all()
 	save_config()
 	for key in _data.keys():

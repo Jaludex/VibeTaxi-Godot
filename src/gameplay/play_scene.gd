@@ -298,11 +298,14 @@ func _pickup_passenger(p: Passenger) -> void:
 
 		if tutorial_mode and _tutorial_step == 1:
 			_tutorial_step = 2
-			_passenger_hud.bind_passenger(p, false)
+			var on_close: Callable = Callable()
+			if rule_strategy.has_hud:
+				_passenger_hud.bind_passenger(p, false)
+				on_close = func() -> void: _passenger_hud.show_greeting()
 			_show_tutorial_dialog(
 				I18n.t("tutorial_title"),
 				I18n.t(_get_integrated_key("radio")),
-				func() -> void: _passenger_hud.show_greeting()
+				on_close
 			)
 		elif rule_strategy.has_hud:
 			_passenger_hud.bind_passenger(p, true)
@@ -335,7 +338,7 @@ func _deliver_active_passenger() -> void:
 		if tutorial_mode and _tutorial_step == 2:
 			_tutorial_step = 3
 			tutorial_mode = false
-			GameFlow.tutorial_enabled = false
+			GameFlow.set_tutorial_enabled(false)
 			_show_tutorial_dialog(I18n.t("tutorial_completed_title"), I18n.t("tutorial_integrated_complete"))
 
 		if is_instance_valid(p):
