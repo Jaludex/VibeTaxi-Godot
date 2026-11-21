@@ -33,6 +33,7 @@ script = ExtResource("5")
 [node name="DeliveryCircle" type="Node2D" parent="."]
 visible = false
 z_index = 1
+z_as_relative = false
 script = ExtResource("12")
 
 [node name="MouseParticles" type="CPUParticles2D" parent="."]
