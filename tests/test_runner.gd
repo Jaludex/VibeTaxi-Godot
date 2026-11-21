@@ -166,6 +166,17 @@ func _test_z_order_overhead_and_debug() -> void:
 	_assert_true(silhouettes_root.z_index > overheads.z_index, "SilhouettesRoot renders above overheads")
 	_assert_true(taxi._silhouette_sprite != null and taxi._silhouette_sprite.get_parent() == silhouettes_root, "Car silhouette attached to SilhouettesRoot")
 
+	var ground_layer: TileMapLayer = map.tile_layers["ground"] as TileMapLayer
+	var buildings_layer: TileMapLayer = map.tile_layers["buildings"] as TileMapLayer
+	var pax_z: Passenger = (load("res://src/entities/passenger.tscn") as PackedScene).instantiate() as Passenger
+	entities_root.add_child(pax_z)
+	var pickup_ring: Node2D = pax_z.get_node("PickupCircle") as Node2D
+	_assert_true(
+		pickup_ring != null and not pickup_ring.z_as_relative and pickup_ring.z_index > ground_layer.z_index and pickup_ring.z_index < buildings_layer.z_index,
+		"Passenger PickupCircle renders above ground and below buildings"
+	)
+	pax_z.queue_free()
+
 	var tsys: TrafficSystem = TrafficSystem.new()
 	add_child(tsys)
 	tsys.setup(map)
