@@ -1,0 +1,47 @@
+name: CI Headless Tests
+
+on:
+  push:
+    branches:
+      - main
+      - development
+  pull_request:
+    branches:
+      - main
+      - development
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: 4.7.2-stable
+
+jobs:
+  test:
+    name: Import & Headless Test Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Godot ${{ env.GODOT_VERSION }}
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/godot-ci
+          key: godot-linux-${{ env.GODOT_VERSION }}
+
+      - name: Download Godot ${{ env.GODOT_VERSION }}
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.cache/godot-ci
+          curl -fSL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/.cache/godot-ci
+          chmod +x ~/.cache/godot-ci/Godot_v${GODOT_VERSION}_linux.x86_64
+          rm -f /tmp/godot.zip
+
+      - name: Import project & run automated tests
+        run: |
+          GODOT_BIN="$HOME/.cache/godot-ci/Godot_v${GODOT_VERSION}_linux.x86_64"
+          "$GODOT_BIN" --headless --path . --import --quit
+          "$GODOT_BIN" --headless --path . res://tests/test_runner.tscn
