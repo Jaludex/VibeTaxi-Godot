@@ -36,6 +36,7 @@ var _walk_target_pos: Vector2 = Vector2.ZERO
 var _walk_callback: Callable = Callable()
 
 @onready var sprite: Sprite2D = $Sprite2D
+@onready var _pickup_circle: Node2D = $PickupCircle
 
 
 func setup(pos: Vector2, p_dest_name: String, p_dest_pos: Vector2, p_def_key: String = "", p_music_pref: String = "", p_valid_genres: Array[String] = []) -> void:
@@ -98,8 +99,9 @@ func _refresh_dialogues() -> void:
 
 
 func _ready() -> void:
+	_pickup_circle.draw.connect(_draw_pickup_circle)
 	_set_anim("idle")
-	queue_redraw()
+	_redraw_pickup_circle()
 
 
 func _process(delta: float) -> void:
@@ -132,7 +134,7 @@ func start_walk_to_node(node: Node2D, on_arrival: Callable) -> void:
 	_walk_callback = on_arrival
 	visible = true
 	_set_anim("walk")
-	queue_redraw()
+	_redraw_pickup_circle()
 
 
 func start_walk_to_pos(pos: Vector2, on_arrival: Callable) -> void:
@@ -142,14 +144,14 @@ func start_walk_to_pos(pos: Vector2, on_arrival: Callable) -> void:
 	_walk_callback = on_arrival
 	visible = true
 	_set_anim("walk")
-	queue_redraw()
+	_redraw_pickup_circle()
 
 
 func start_ride() -> void:
 	current_state = State.RIDE
 	visible = false
 	_set_anim("idle")
-	queue_redraw()
+	_redraw_pickup_circle()
 
 
 func update_comfort(delta: float, current_genre: String) -> void:
@@ -230,6 +232,11 @@ func _set_anim(anim_name: String) -> void:
 		sprite.frame = int(_active_frames[0])
 
 
-func _draw() -> void:
+func _redraw_pickup_circle() -> void:
+	if _pickup_circle != null:
+		_pickup_circle.queue_redraw()
+
+
+func _draw_pickup_circle() -> void:
 	if current_state == State.WAIT:
-		draw_arc(Vector2.ZERO, GameConstants.PASSENGER_DETECTION_RADIUS, 0.0, TAU, 36, Color.YELLOW, 2.0)
+		_pickup_circle.draw_arc(Vector2.ZERO, GameConstants.PASSENGER_DETECTION_RADIUS, 0.0, TAU, 36, Color.YELLOW, 2.0)

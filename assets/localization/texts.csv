@@ -88,7 +88,11 @@ Fonts:
 Google Fonts
 
 Thanks for playing our game!
-Hope you enjoy it and have a good time!","VIBE TAXI
+Hope you enjoy it and have a good time!
+
+Open Source & Licenses:
+Powered by Godot Engine (MIT), FreeType, ENet & Mbed TLS.
+Fonts: Jersey 10/25 & Segment7 (SIL OFL 1.1).","VIBE TAXI
 Originalmente hecho con Gale y Pygame, portado a Godot 4.
 Como Proyecto en el curso de
 Programación de Videojuegos I (ULA)
@@ -108,7 +112,11 @@ Fuentes:
 Google Fonts
 
 ¡Gracias por jugar nuestro juego!
-¡Esperamos que lo disfrutes y pases un buen rato!"
+¡Esperamos que lo disfrutes y pases un buen rato!
+
+Código Abierto y Licencias:
+Hecho con Godot Engine (MIT), FreeType, ENet y Mbed TLS.
+Fuentes: Jersey 10/25 y Segment7 (SIL OFL 1.1)."
 msg_lang_title,Select Language,Seleccionar Idioma
 mode_selection_title,Select Mode,Seleccionar Modo
 mode_tutorial_desc,Learn the basics of the game,Aprende los conceptos básicos del juego

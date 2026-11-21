@@ -1,0 +1,223 @@
+name: Build and Release VibeTaxi
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version label (e.g. v2.0.0)'
+        required: true
+        default: 'v2.0.0'
+
+permissions:
+  contents: write
+
+env:
+  GODOT_VERSION: 4.7.2-stable
+  TEMPLATES_DIR_NAME: 4.7.2.stable
+  ITCH_USER: jaludex
+  ITCH_GAME: vibe-taxi
+
+jobs:
+  build-and-release:
+    name: Export & Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve release version
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up JDK 17 for Android signing
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Godot binary & export templates
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/godot-ci
+            ~/.local/share/godot/export_templates/${{ env.TEMPLATES_DIR_NAME }}
+          key: godot-full-${{ env.GODOT_VERSION }}
+
+      - name: Download Godot & export templates
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.cache/godot-ci ~/.local/share/godot/export_templates/${TEMPLATES_DIR_NAME}
+          curl -fSL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/.cache/godot-ci
+          chmod +x ~/.cache/godot-ci/Godot_v${GODOT_VERSION}_linux.x86_64
+          rm -f /tmp/godot.zip
+
+          curl -fSL -o /tmp/templates.tpz \
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          unzip -q /tmp/templates.tpz -d /tmp/templates_extract
+          mv /tmp/templates_extract/templates/* ~/.local/share/godot/export_templates/${TEMPLATES_DIR_NAME}/
+          rm -rf /tmp/templates.tpz /tmp/templates_extract
+
+      - name: Import project & run headless test suite
+        run: |
+          GODOT_BIN="$HOME/.cache/godot-ci/Godot_v${GODOT_VERSION}_linux.x86_64"
+          "$GODOT_BIN" --headless --path . --import --quit
+          "$GODOT_BIN" --headless --path . res://tests/test_runner.tscn
+
+      - name: Export Windows, Linux, macOS, and Web
+        run: |
+          GODOT_BIN="$HOME/.cache/godot-ci/Godot_v${GODOT_VERSION}_linux.x86_64"
+          VER="${{ steps.meta.outputs.version }}"
+          mkdir -p dist web_build
+
+          "$GODOT_BIN" --headless --path . --export-release "Windows Desktop" "dist/VibeTaxi-${VER}-Windows.zip"
+          "$GODOT_BIN" --headless --path . --export-release "Linux" "dist/VibeTaxi-${VER}-Linux.zip"
+          "$GODOT_BIN" --headless --path . --export-release "macOS" "dist/VibeTaxi-${VER}-macOS.zip"
+          "$GODOT_BIN" --headless --path . --export-release "Web" "web_build/index.html"
+          zip -qj "dist/VibeTaxi-${VER}-Windows.zip" LICENSE THIRD_PARTY_LICENSES.md
+          zip -qj "dist/VibeTaxi-${VER}-Linux.zip" LICENSE THIRD_PARTY_LICENSES.md
+          zip -qj "dist/VibeTaxi-${VER}-macOS.zip" LICENSE THIRD_PARTY_LICENSES.md
+          (cd web_build && zip -qr "../dist/VibeTaxi-${VER}-Web.zip" .)
+
+      - name: Configure & export signed Android APK
+        id: android
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_USER: ${{ secrets.ANDROID_KEYSTORE_USER }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$KEYSTORE_USER" ] || [ -z "$KEYSTORE_PASS" ]; then
+            echo "::warning::Android release keystore secrets not configured; skipping signed Android APK export."
+            echo "built=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          printf '%s' "$KEYSTORE_B64" | tr -d '\r\n ' | base64 -d > /tmp/vibetaxi-release.keystore
+          mkdir -p ~/.config/godot .godot
+
+          cat > ~/.config/godot/editor_settings-4.7.tres <<EOF
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "${ANDROID_HOME}"
+          export/android/java_sdk_path = "${JAVA_HOME}"
+          EOF
+
+          cat > .godot/export_credentials.cfg <<EOF
+          [preset.3]
+
+          [preset.3.options]
+
+          keystore/release="/tmp/vibetaxi-release.keystore"
+          keystore/release_user="${KEYSTORE_USER}"
+          keystore/release_password="${KEYSTORE_PASS}"
+          EOF
+
+          GODOT_BIN="$HOME/.cache/godot-ci/Godot_v${GODOT_VERSION}_linux.x86_64"
+          VER="${{ steps.meta.outputs.version }}"
+          "$GODOT_BIN" --headless --path . --export-release "Android" "dist/VibeTaxi-${VER}-Android.apk"
+          rm -f /tmp/vibetaxi-release.keystore .godot/export_credentials.cfg
+          echo "built=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: VibeTaxi-${{ steps.meta.outputs.version }}
+          path: dist/VibeTaxi-*
+          retention-days: 7
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/VibeTaxi-*
+          generate_release_notes: true
+
+      - name: Check Itch.io Butler secret
+        id: itch
+        env:
+          BUTLER_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          if [ -n "$BUTLER_KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::BUTLER_API_KEY secret not configured; skipping Itch.io upload."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify Itch.io Butler credentials (dry-run, read-only)
+        if: github.event_name == 'workflow_dispatch' && steps.itch.outputs.enabled == 'true'
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          curl -fSL -o /tmp/butler.zip "https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default"
+          unzip -q /tmp/butler.zip -d /tmp/butler
+          chmod +x /tmp/butler/butler
+          /tmp/butler/butler status "${ITCH_USER}/${ITCH_GAME}"
+          rm -rf /tmp/butler /tmp/butler.zip
+
+      - name: Push Windows to Itch.io
+        if: startsWith(github.ref, 'refs/tags/') && steps.itch.outputs.enabled == 'true'
+        uses: manleydev/butler-publish-itchio-action@master
+        env:
+          BUTLER_CREDENTIALS: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_USER: ${{ env.ITCH_USER }}
+          ITCH_GAME: ${{ env.ITCH_GAME }}
+          CHANNEL: windows
+          PACKAGE: dist/VibeTaxi-${{ steps.meta.outputs.version }}-Windows.zip
+          VERSION: ${{ steps.meta.outputs.version }}
+
+      - name: Push Linux to Itch.io
+        if: startsWith(github.ref, 'refs/tags/') && steps.itch.outputs.enabled == 'true'
+        uses: manleydev/butler-publish-itchio-action@master
+        env:
+          BUTLER_CREDENTIALS: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_USER: ${{ env.ITCH_USER }}
+          ITCH_GAME: ${{ env.ITCH_GAME }}
+          CHANNEL: linux
+          PACKAGE: dist/VibeTaxi-${{ steps.meta.outputs.version }}-Linux.zip
+          VERSION: ${{ steps.meta.outputs.version }}
+
+      - name: Push macOS to Itch.io
+        if: startsWith(github.ref, 'refs/tags/') && steps.itch.outputs.enabled == 'true'
+        uses: manleydev/butler-publish-itchio-action@master
+        env:
+          BUTLER_CREDENTIALS: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_USER: ${{ env.ITCH_USER }}
+          ITCH_GAME: ${{ env.ITCH_GAME }}
+          CHANNEL: osx
+          PACKAGE: dist/VibeTaxi-${{ steps.meta.outputs.version }}-macOS.zip
+          VERSION: ${{ steps.meta.outputs.version }}
+
+      - name: Push Web to Itch.io
+        if: startsWith(github.ref, 'refs/tags/') && steps.itch.outputs.enabled == 'true'
+        uses: manleydev/butler-publish-itchio-action@master
+        env:
+          BUTLER_CREDENTIALS: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_USER: ${{ env.ITCH_USER }}
+          ITCH_GAME: ${{ env.ITCH_GAME }}
+          CHANNEL: html5
+          PACKAGE: dist/VibeTaxi-${{ steps.meta.outputs.version }}-Web.zip
+          VERSION: ${{ steps.meta.outputs.version }}
+
+      - name: Push Android APK to Itch.io
+        if: startsWith(github.ref, 'refs/tags/') && steps.itch.outputs.enabled == 'true' && steps.android.outputs.built == 'true'
+        uses: manleydev/butler-publish-itchio-action@master
+        env:
+          BUTLER_CREDENTIALS: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_USER: ${{ env.ITCH_USER }}
+          ITCH_GAME: ${{ env.ITCH_GAME }}
+          CHANNEL: android
+          PACKAGE: dist/VibeTaxi-${{ steps.meta.outputs.version }}-Android.apk
+          VERSION: ${{ steps.meta.outputs.version }}

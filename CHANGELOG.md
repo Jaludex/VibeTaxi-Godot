@@ -1,0 +1,190 @@
+Notable changes on the project will be documented here
+
+# Changelog
+
+Format based on [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/), version format by [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## 2.0.0 - 2026-11-20
+
+### Added
+ - Full engine migration from Python/Pygame (`GALE`) to **Godot 4.7** (`GL Compatibility`) with full feature parity across all game modes (`Workday`, `Arcade`, `Zen`, and `Tutorial`)
+ - **Android** native platform support (`arm64-v8a` signed release APK and Gradle AAB export preset)
+ - **Web (HTML5)** platform support for desktop browsers (single-threaded WASM, ready for itch.io)
+ - **macOS Universal** export preset (Apple Silicon & Intel)
+ - Native multi-touch mobile HUD (`TouchControls`) supporting switchable **Virtual Joystick** and **Follow Finger** driving modes, simultaneous drift/brake pedals, radio `<` / `>` buttons, and pause button
+ - Mobile platform lifecycle integration: Android Back button/gesture handling (`NOTIFICATION_WM_GO_BACK_REQUEST`), automatic pause on minimize (`NOTIFICATION_APPLICATION_PAUSED`), and virtual-keyboard-aware `NewRecord` panel positioning
+ - Native pure-GDScript asynchronous **Discord Rich Presence** IPC client (`StreamPeerUDS` on Linux/macOS, named pipes on Windows) with zero external binaries
+ - High-resolution multiplatform icons (512x512 PNG, multi-size Windows ICO, 1024x1024 macOS ICNS, Android adaptive foreground/background/monochrome 432x432 + legacy 192x192) and custom Boot Splash
+ - Automated headless test suite (`tests/test_runner.tscn`)
+ - Third-party license attributions (`THIRD_PARTY_LICENSES.md`) covering Godot Engine and bundled OFL 1.1 fonts
+
+### Changed
+ - Converted background music tracks to OGG Vorbis with lazy on-demand loading per radio station for smoother performance and smaller exports
+ - Replaced Python dependencies with native Godot 4 systems
+
+## 1.4.0 - 2026-10-20
+
+### Added
+ - Pedestrian NPC system with autonomous sidewalk navigation, randomized spawning, and full animation states (walking, hit, downed, and recovering)
+ - Collision detection between pedestrians and vehicles with impact particles, knockdown states, and hit sound effects
+ - Spatial partitioning grid (`CollisionSpatialGrid`) for high-performance pedestrian proximity and collision queries
+ - Gamepad and Keyboard driving support implemented via strategy pattern (`input_strategies.py`)
+ - Gamepad analog steering with trigger-based progressive braking and drifting
+ - Directional menu navigation supporting keyboard (arrows/Enter/Space) and gamepad (D-pad/A/X) via `SpatialContainer`
+ - Dynamic controller-aware tutorial and HUD hints that automatically adapt to the active input device
+ - Comprehensive Options menu accessible from Title and Pause screens
+ - Categorized volume control system (Master, Music, SFX) with custom interactive `Slider` UI components
+ - Analog stick deadzone configuration and interactive visualizer in Options menu
+ - Variable target framerate settings (30, 60, 120, 144, uncapped)
+ - Discord Rich Presence integration displaying real-time game mode stats, active fares, and current menu state
+ - Integrated in-game tutorial flow directly in `PlayState` with step-by-step guidance and dialogue prompts
+ - Tutorial toggle button in Title Screen with active theme styling
+ - Visual vibe mode overhaul including dynamic taxi ghosting / afterimage trail effects tinted by music genre, floating musical note particle effects, and animated passenger HUD feedback during drift
+ - Added `pyinstance` dependency to enforce single application instance execution
+
+### Changed
+ - Refactored entire audio system to scale volume dynamically by channel categories
+ - Tuned mouse steering by reducing cursor radius to 80px for sharper handling
+ - Added option to skip the Game Over screen rank reveal animation
+ - Optimized map rendering through viewport prop culling, particle emitter caching, and surface caching in `DrawableMixin`
+ - Updated traffic car AI to detect and brake for pedestrians in roadways
+
+### Fixed
+ - Fix initial language selection popup appearing unexpectedly on startup
+ - Fix prop impact collision response and penalty attribution
+ - Fix redundant entity collision and update flags
+ - Fix SDL2/Pygame gamepad axis normalization bug causing unintentional full-axis inputs on microscopic drift
+
+## 1.3.0 - 2026-09-26
+
+### Added
+ - Full localization and internationalization system (i18n) supporting English and Spanish across menus, HUD, dialogues, records, and tutorial maps
+ - Performance ranking system (F, E, D, C, B, A, VIBE) for Game Over screen with custom colors, thresholds, reveal animations, and dedicated rank reveal sound effects
+ - Arcade mode scoring overhaul based on fares, fast arrival bonuses, and safe driving bonuses
+ - Animated roll-up tween for score and money counters in Arcade and Workday modes
+ - Dynamic floating bonus popups next to HUD counters upon delivering passengers
+ - New bonus sound effect played when achieving fast or safe arrival bonuses
+ - Passenger rear-view portrait shake effect when crashing the taxi
+ - Destination arrow animation tweening from the taxi towards the screen edge when a passenger boards
+ - Passenger comfort drain mechanism when listening to disliked music stations for too long
+
+### Changed
+ - Redesigned HUD to display large numeric score/money values with centered descriptive labels below the taximeter
+ - Game Over panel resized and redesigned to display performance ranks with delayed opacity tweening
+ - Centralized game balance parameters, scoring constants, and ranking thresholds in `settings.py`
+
+### Fixed
+ - Fix repair cost in EndOfDayState not updating the money label after vehicle repairs
+ - Fix passenger wobble animation duration reset on collision
+ - Fix passenger ride time double-incrementing per frame
+ - Fix tutorial tilemap strings by converting them to translation keys
+ - Fix string formatting KeyError in Workday initial day text
+
+## 1.2.0 - 2026-09-19
+
+## Added
+ - Finished south part of the city
+
+## Changed
+ - Game Logo
+
+## Fixed
+ - Fix duplicated tile objects ID from work in parallel with the same map
+ - Fix Soutch city spawn having a passenger spawning right by it's side
+ - Fix Passenger dialogue pagination not... paginating
+
+## 1.1.0 - 2026-09-18 Day 7 of development. Project send to the teacher, waiting our score
+
+### Added
+ - User Tracks Function, allow the player to load his own songs to each radio station
+ - Pause hint on the tutorial
+
+### Fixed
+ - Leftover debug prints
+ - Not having invincibility on the tutorial
+
+## 1.0.0 - 2026-09-17 Day 6 of development
+
+### Added
+ - Passenger dialogues for knowing where it's going and his music taste
+ - HUD for reading the Passenger dialogue, knowing if he's/she's happy and seeing him on the rearview
+ - TypeWriterTextBox, inherits from Gale.ui.TextBox and displays the text letter by letter for easier reading, and plays a blip sounds.
+ - Tutorial GameState and Strategy for a controlled enviroment where to learn about the game
+ - MessageBox state for display texts with a TypeWriterTextBox
+ - Fullscreen via F11
+
+### Changed
+ - Make GameOverState use a MessageBox instead of making his own panel
+
+### Fixed
+ - Remove unexpected collision in the middle of the city
+
+## 1.0.0-beta - 2026-09-16 Day 5 of development
+
+### Added
+ - All variety of sounds, all from free from copyright sources. From [Pixabay](https://pixabay.com/es/) and [OpenGameArt](https://opengameart.org/). Includes:
+    - Engine sounds
+    - Crash sounds
+    - Menu Sounds
+    - More music
+ - Arrow pointing towards the desination of the active passenger
+ - Mouse particles
+ - Make the car emit particles displaing his damage
+ - Rest of the game states. Includes:
+    - Opening
+    - Title
+    - Records
+    - Select Mode
+    - Pause
+    - And several menus
+ - Disconnect Gamemode logic from PlayState via Strategy on game_modes
+ - Add 3 game modes, WorkDay, Arcade and Zen
+ - Game saves via Gale.save, used for saving WorkDay mode games (For coming back later) and records
+
+### Fixes
+ - RadioTuner system, making it data-oriented
+ - Command Pattern use on Taxi and RadioTuner
+ - Radio marker visuals
+ - Visual transitions between states
+ - RadiotTuner visuals
+ - Traffic Cars spinning when crashed or run out of nodes
+
+## 1.0.0-alpha4 - 2026-09-15 Day 4 of development
+
+### Added
+ - Change all entity physics to Gale.Physics in order to allow for more freedom
+ - Add Traffic Cars to the city
+ - Add Particle Emitter, a manager for Gale.ParticleSystem disconnecting the particle behaivour from the entity that produces them
+ - Add Particles for a lots of effecs
+ - Initial Vibe Mode, allowing for drifting
+ - Debug physics renders
+
+### Deprecated
+ - CollidableMixinClass
+
+## 1.0.0-alpha3 - 2026-09-14 Day 3 of development
+
+### Added
+ - Design half of the city
+ - Add initial radio system with free from copyright music
+
+## 1.0.0-alpha2 - 2026-09-13 Day 2 of development
+
+### Added
+ - Basic passenger behaviour
+ - passenger textures made by [vimlark](https://vimlark.itch.io/town-asset-pack-16x16) on itch.io
+ - Change tilemap rendering from Gale's default to a per-layer rendering, allowing for overheads
+ - Make base of buildings solid
+ - "Mario sunshine shadow" for when the car is behind a building
+ - Add some props
+ - Start designing the radio UI
+
+## 1.0.0-alpha1 - 2026-09-12 Day 1 of development
+
+### Added
+- Car movement by mouse controls and brake with "X", car properties defined by a definitions file
+- Basic city tilemap made in tiled for testing driving
+- Basic screen title state
+- Fill cars and passengers definitions with basic data for testing
+- Some cars textures by [Kia](https://kia.itch.io/32x32-car-sprites) on itch.io
+- City tileset made by [nyknck](https://nyknck.itch.io/citypackpixelart) on itch.io
