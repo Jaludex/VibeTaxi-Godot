@@ -137,12 +137,34 @@ jobs:
           path: dist/VibeTaxi-*
           retention-days: 7
 
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          VER: ${{ steps.meta.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os, re, datetime
+          tag = os.environ["VER"]
+          ver = tag.lstrip("v")
+          text = open("CHANGELOG.md", encoding="utf-8").read()
+          m = re.search(rf"(^##\s+{re.escape(ver)}\b.*?)(?=^##\s+|\Z)", text, re.M | re.S)
+          body = m.group(1).strip() if m else f"## {ver}"
+          open("/tmp/release_notes.md", "w", encoding="utf-8").write(body + "\n")
+          dm = re.search(r"(\d{4}-\d{2}-\d{2})", body.splitlines()[0])
+          date_str = dm.group(1) if dm else datetime.date.today().isoformat()
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"title={tag} {date_str}\n")
+          PY
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          name: ${{ steps.notes.outputs.title }}
+          body_path: /tmp/release_notes.md
           files: dist/VibeTaxi-*
-          generate_release_notes: true
+          generate_release_notes: false
 
       - name: Check Itch.io Butler secret
         id: itch
