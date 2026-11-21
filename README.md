@@ -65,7 +65,7 @@ godot --headless --path . res://tests/test_runner.tscn
 
 ## License
 
-Licensed under the [MIT License](LICENSE).
+Licensed under the [MIT License](LICENSE). Third-party engine, font, and asset notices are documented in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 ## Credits
 

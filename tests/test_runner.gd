@@ -542,3 +542,12 @@ func _test_discord_rpc() -> void:
 	tm.show_side_popup("+$15", Color.GREEN)
 	_assert_true(tm._side_popup.position == Vector2(92.0, 50.0), "Taximeter SidePopup starts from its editor base position")
 	tm.queue_free()
+
+	# 7. TypewriterBox strips leading/trailing blank lines on page boundaries
+	var tw: TypewriterBox = TypewriterBox.new()
+	tw.size = Vector2(300.0, 120.0)
+	tw.lines_per_page = 3
+	add_child(tw)
+	tw.set_box_text("Line 1\nLine 2\nLine 3\n\nLine 4\nLine 5")
+	_assert_true(tw._pages.size() == 2 and not tw._pages[1].begins_with("\n") and tw._pages[1].begins_with("Line 4"), "TypewriterBox omits leading blank lines on new pages")
+	tw.queue_free()
