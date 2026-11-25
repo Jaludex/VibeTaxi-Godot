@@ -38,7 +38,12 @@ const SFX_PATHS: Dictionary = {
 	"menu_music": "res://assets/music/menu.ogg",
 }
 
+const WEB_PREWARM_INTERVAL_SEC: float = 0.15
+
 var _sfx_cache: Dictionary = {}
+var _music_cache: Dictionary = {}
+var _prewarm_queue: Array[String] = []
+var _prewarm_timer: float = 0.0
 var _sfx_pool: Array[AudioStreamPlayer] = []
 @onready var _music_player: AudioStreamPlayer = $MusicPlayer
 @onready var _ambient_player: AudioStreamPlayer = $AmbientPlayer
@@ -50,13 +55,43 @@ func _ready() -> void:
 	for child in _sfx_pool_root.get_children():
 		if child is AudioStreamPlayer:
 			_sfx_pool.append(child as AudioStreamPlayer)
+	# Stream long OGG music/ambient tracks instead of Web's default Sample mode,
+	# which synchronously decodes entire tracks into PCM buffers on first play().
+	_music_player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
+	_ambient_player.playback_type = AudioServer.PLAYBACK_TYPE_STREAM
+	set_process(false)
+	if OS.has_feature("web"):
+		queue_web_music_prewarm()
+
+
+func _process(delta: float) -> void:
+	if _prewarm_queue.is_empty():
+		set_process(false)
+		return
+	# Only warm OGG streams outside active driving to avoid mid-gameplay WASM hitches.
+	var scene: Node = get_tree().current_scene
+	if scene is PlayScene and not get_tree().paused and not GameFlow.has_modals():
+		return
+	_prewarm_timer -= delta
+	if _prewarm_timer <= 0.0:
+		_prewarm_timer = WEB_PREWARM_INTERVAL_SEC
+		var path: String = _prewarm_queue.pop_front() as String
+		var stream: AudioStream = get_music_stream(path)
+		if stream != null:
+			stream.get_length()
 
 
 func _exit_tree() -> void:
+	stop_all_audio()
+	_sfx_pool.clear()
+
+
+func stop_all_audio() -> void:
+	_prewarm_queue.clear()
+	set_process(false)
 	for player in _sfx_pool:
 		player.stop()
 		player.stream = null
-	_sfx_pool.clear()
 	if _music_player != null:
 		_music_player.stop()
 		_music_player.stream = null
@@ -64,6 +99,70 @@ func _exit_tree() -> void:
 		_ambient_player.stop()
 		_ambient_player.stream = null
 	_sfx_cache.clear()
+	_music_cache.clear()
+
+
+func queue_web_music_prewarm() -> void:
+	_prewarm_queue.clear()
+	var files: PackedStringArray = ResourceLoader.list_directory("res://resources/radio")
+	if files.is_empty():
+		var dir: DirAccess = DirAccess.open("res://resources/radio")
+		if dir != null:
+			files = dir.get_files()
+	files.sort()
+
+	var station_lists: Array[Array] = []
+	var max_len: int = 0
+	for raw_name in files:
+		var fname: String = raw_name.trim_suffix(".remap")
+		if not fname.ends_with(".tres"):
+			continue
+		var station: RadioStationDef = load("res://resources/radio/" + fname) as RadioStationDef
+		if station == null or station.track_paths.is_empty():
+			continue
+		var paths: Array = []
+		for p in station.track_paths:
+			if not p.is_empty() and not _music_cache.has(p):
+				paths.append(p)
+		if not paths.is_empty():
+			paths.shuffle()
+			station_lists.append(paths)
+			max_len = maxi(max_len, paths.size())
+
+	# Interleave round-robin across stations so every station has cached tracks early.
+	for i in max_len:
+		for paths in station_lists:
+			if i < paths.size():
+				_prewarm_queue.append(str(paths[i]))
+	_prewarm_timer = WEB_PREWARM_INTERVAL_SEC
+	set_process(not _prewarm_queue.is_empty())
+
+
+func has_music_stream(path: String) -> bool:
+	return _music_cache.has(path)
+
+
+func is_music_prewarm_pending() -> bool:
+	return not _prewarm_queue.is_empty()
+
+
+func get_music_stream(path: String) -> AudioStream:
+	if _music_cache.has(path):
+		return _music_cache[path] as AudioStream
+	var stream: AudioStream = null
+	if path.begins_with("res://"):
+		stream = load(path) as AudioStream
+	else:
+		match path.get_extension().to_lower():
+			"ogg":
+				stream = AudioStreamOggVorbis.load_from_file(path)
+			"mp3":
+				stream = AudioStreamMP3.load_from_file(path)
+			"wav":
+				stream = AudioStreamWAV.load_from_file(path)
+	if stream != null:
+		_music_cache[path] = stream
+	return stream
 
 
 func get_stream(key: String) -> AudioStream:
@@ -191,9 +290,13 @@ func play_preview(category: String) -> void:
 
 func _set_stream_loop(stream: AudioStream, loop: bool) -> void:
 	if stream is AudioStreamOggVorbis:
-		(stream as AudioStreamOggVorbis).loop = loop
+		var ogg: AudioStreamOggVorbis = stream as AudioStreamOggVorbis
+		if ogg.loop != loop:
+			ogg.loop = loop
 	elif stream is AudioStreamMP3:
-		(stream as AudioStreamMP3).loop = loop
+		var mp3: AudioStreamMP3 = stream as AudioStreamMP3
+		if mp3.loop != loop:
+			mp3.loop = loop
 	elif stream is AudioStreamWAV:
 		var wav: AudioStreamWAV = stream as AudioStreamWAV
 		wav.loop_mode = AudioStreamWAV.LOOP_FORWARD if loop else AudioStreamWAV.LOOP_DISABLED

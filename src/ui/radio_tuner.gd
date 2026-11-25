@@ -5,12 +5,15 @@ extends Control
 
 signal station_changed(genre: String, station_name: String)
 
+const TUNE_DEBOUNCE_SEC: float = 0.22
+
 @export var station_defs: Array[RadioStationDef] = []
 
 var stations: Array[Dictionary] = []
 var current_index: int = 0
 var radio_volume: int = 50
 var _user_tracks_loaded: Dictionary = {}
+var _pending_tune_delay: float = 0.0
 
 @onready var _marker: TextureRect = $Marker
 @onready var _knob: TextureRect = $Knob
@@ -87,7 +90,15 @@ func get_station_vibe_color(genre: String) -> Color:
 	return Color.CYAN
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if _pending_tune_delay > 0.0:
+		_pending_tune_delay -= delta
+		if _pending_tune_delay <= 0.0:
+			var tuned_songs: Array = stations[current_index]["songs"] as Array
+			if not tuned_songs.is_empty():
+				_play_random_track(tuned_songs, randf_range(0.0, 60.0))
+		return
+
 	var station: Dictionary = stations[current_index]
 	var songs: Array = station["songs"] as Array
 	if not songs.is_empty() and not AudioManager.get_music_player().playing:
@@ -222,30 +233,25 @@ func _apply_station_change() -> void:
 	_lazy_load_user_tracks(genre, station["songs"] as Array)
 
 	var songs: Array = station["songs"] as Array
-	if not songs.is_empty():
-		_play_random_track(songs, randf_range(0.0, 60.0))
+	# Debounce track load/play so rapid station zapping skips intermediate OGG decodes.
+	_pending_tune_delay = TUNE_DEBOUNCE_SEC if not songs.is_empty() else 0.0
 
 	station_changed.emit(genre, get_current_station_name())
 
 
 func _play_random_track(songs: Array, start_sec: float) -> void:
-	var entry: Variant = songs[randi() % songs.size()]
-	var stream: AudioStream = entry as AudioStream if entry is AudioStream else _load_audio_file(str(entry))
+	var pool: Array = songs
+	if OS.has_feature("web") and AudioManager.is_music_prewarm_pending():
+		var cached: Array = []
+		for s in songs:
+			if s is AudioStream or AudioManager.has_music_stream(str(s)):
+				cached.append(s)
+		if not cached.is_empty():
+			pool = cached
+	var entry: Variant = pool[randi() % pool.size()]
+	var stream: AudioStream = entry as AudioStream if entry is AudioStream else AudioManager.get_music_stream(str(entry))
 	if stream != null:
 		AudioManager.play_music_stream(stream, false, start_sec, radio_volume / 100.0)
-
-
-func _load_audio_file(path: String) -> AudioStream:
-	if path.begins_with("res://"):
-		return load(path) as AudioStream
-	var ext: String = path.get_extension().to_lower()
-	if ext == "ogg":
-		return AudioStreamOggVorbis.load_from_file(path)
-	if ext == "mp3":
-		return AudioStreamMP3.load_from_file(path)
-	if ext == "wav":
-		return AudioStreamWAV.load_from_file(path)
-	return null
 
 
 func _lazy_load_user_tracks(genre: String, target_songs: Array) -> void:
@@ -278,7 +284,7 @@ func _lazy_load_user_tracks(genre: String, target_songs: Array) -> void:
 			var ext: String = fname.get_extension().to_lower()
 			if ext in ["mp3", "ogg", "wav"]:
 				var full_path: String = dir_path.path_join(fname)
-				if _load_audio_file(full_path) != null:
+				if AudioManager.get_music_stream(full_path) != null:
 					target_songs.append(full_path)
 		fname = dir.get_next()
 	dir.list_dir_end()
