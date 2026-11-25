@@ -281,6 +281,8 @@ func _update_atmosphere(delta: float) -> void:
 
 	_atmosphere.color = color
 	night_intensity = compute_night_intensity(color)
+	if _city_map != null:
+		_city_map.set_night_intensity(night_intensity)
 	if taxi != null:
 		taxi.set_night_intensity(night_intensity)
 	if _traffic_system != null:

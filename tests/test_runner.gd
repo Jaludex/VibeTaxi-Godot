@@ -604,9 +604,11 @@ func _test_day_night_atmosphere() -> void:
 	var wd_ps: PlayScene = (load("res://src/gameplay/play_scene.tscn") as PackedScene).instantiate() as PlayScene
 	add_child(wd_ps)
 	_assert_true(wd_ps.night_intensity == 0.0 and not wd_ps.taxi._headlights_node.visible, "Workday starts in daylight with taxi headlights off")
+	_assert_true(wd_ps._city_map._night_glow_layers.size() == 4 and not wd_ps._city_map._night_glow_layers[0].visible, "CityMap builds 4 unshaded night-glow layers hidden in daylight")
 	wd_ps.rule_strategy.time_remaining = 0.0
 	wd_ps._update_atmosphere(0.0)
 	_assert_true(wd_ps.night_intensity > 0.9 and wd_ps.taxi._headlights_node.visible, "Workday turns on taxi headlights at night")
+	_assert_true(wd_ps._city_map._night_glow_layers[1].visible and wd_ps._city_map._night_glow_layers[1].modulate.a > 0.5, "CityMap lights up building windows at night")
 	wd_ps.queue_free()
 
 	GameFlow.pending_play_params = {"mode": "arcade", "tutorial_mode": false}
