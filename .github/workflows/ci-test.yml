@@ -21,11 +21,11 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Cache Godot ${{ env.GODOT_VERSION }}
         id: cache-godot
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/godot-ci
           key: godot-linux-${{ env.GODOT_VERSION }}

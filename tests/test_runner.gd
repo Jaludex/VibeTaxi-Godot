@@ -10,7 +10,10 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_run_all_tests()
 	await get_tree().process_frame
+	GameFlow.clear_modals()
 	await get_tree().process_frame
+	AudioManager.stop_all_audio()
+	await get_tree().create_timer(0.15).timeout
 	print("TEST SUMMARY: %d passed, %d failed" % [_passed, _failed])
 	get_tree().quit(0 if _failed == 0 else 1)
 
@@ -390,6 +393,18 @@ func _test_touch_and_mobile() -> void:
 	radio.position = Vector2.ZERO
 	radio.size = Vector2(480.0, 64.0)
 	_assert_true(radio.handle_pointer_at(Vector2(300.0, 32.0)) and radio.current_index == 1, "RadioTuner tap right advances station")
+	_assert_true(radio._pending_tune_delay > 0.0 and not AudioManager.get_music_player().playing, "RadioTuner debounces track load during rapid station switches")
+	radio._process(RadioTuner.TUNE_DEBOUNCE_SEC + 0.05)
+	_assert_true(AudioManager.get_music_player().playing, "RadioTuner starts playback once debounce elapses")
+	_assert_true(AudioManager.get_music_player().playback_type == AudioServer.PLAYBACK_TYPE_STREAM, "AudioManager streams music instead of Web Sample decoding")
+	var cached_a: AudioStream = AudioManager.get_music_stream(rock_def.track_paths[0])
+	var cached_b: AudioStream = AudioManager.get_music_stream(rock_def.track_paths[0])
+	_assert_true(cached_a != null and cached_a == cached_b, "AudioManager caches loaded music streams across station switches")
+	AudioManager.queue_web_music_prewarm()
+	var queued_count: int = AudioManager._prewarm_queue.size()
+	_assert_true(queued_count >= 20 and AudioManager.is_music_prewarm_pending(), "AudioManager queues all remaining radio tracks for Web prewarm (%d queued)" % queued_count)
+	AudioManager._prewarm_queue.clear()
+	AudioManager.set_process(false)
 	_assert_true(radio.handle_pointer_at(Vector2(150.0, 32.0)) and radio.current_index == 0, "RadioTuner tap left goes to prev station")
 	radio.queue_free()
 
