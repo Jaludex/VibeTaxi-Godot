@@ -39,6 +39,7 @@ func _run_all_tests() -> void:
 	_test_all_scenes_instantiate()
 	_test_touch_and_mobile()
 	_test_discord_rpc()
+	_test_day_night_atmosphere()
 
 
 func _test_tiled_parsing() -> void:
@@ -585,3 +586,34 @@ func _test_discord_rpc() -> void:
 		ps_m.queue_free()
 
 	GameFlow.set_tutorial_enabled(prev_tut)
+
+
+func _test_day_night_atmosphere() -> void:
+	var morning: Color = PlayScene.evaluate_atmosphere_color(0.0, false)
+	var sunset: Color = PlayScene.evaluate_atmosphere_color(0.62, false)
+	var night: Color = PlayScene.evaluate_atmosphere_color(1.0, false)
+	_assert_true(PlayScene.compute_night_intensity(morning) == 0.0, "Workday morning has zero night intensity")
+	_assert_true(sunset.r > sunset.b and PlayScene.compute_night_intensity(sunset) > 0.1, "Workday sunset tints warm amber and begins turning lights on")
+	_assert_true(night.b > night.r and PlayScene.compute_night_intensity(night) > 0.9, "Workday night shifts to indigo with full night intensity")
+
+	var loop_start: Color = PlayScene.evaluate_atmosphere_color(0.0, true)
+	var loop_end: Color = PlayScene.evaluate_atmosphere_color(1.0, true)
+	_assert_true(loop_start.is_equal_approx(loop_end), "Arcade/Zen atmosphere curve loops seamlessly from morning back to morning")
+
+	GameFlow.pending_play_params = {"mode": "workday", "tutorial_mode": false}
+	var wd_ps: PlayScene = (load("res://src/gameplay/play_scene.tscn") as PackedScene).instantiate() as PlayScene
+	add_child(wd_ps)
+	_assert_true(wd_ps.night_intensity == 0.0 and not wd_ps.taxi._headlights_node.visible, "Workday starts in daylight with taxi headlights off")
+	wd_ps.rule_strategy.time_remaining = 0.0
+	wd_ps._update_atmosphere(0.0)
+	_assert_true(wd_ps.night_intensity > 0.9 and wd_ps.taxi._headlights_node.visible, "Workday turns on taxi headlights at night")
+	wd_ps.queue_free()
+
+	GameFlow.pending_play_params = {"mode": "arcade", "tutorial_mode": false}
+	var arc_ps: PlayScene = (load("res://src/gameplay/play_scene.tscn") as PackedScene).instantiate() as PlayScene
+	add_child(arc_ps)
+	arc_ps._update_atmosphere(PlayScene.ARCADE_CYCLE_DURATION * 0.78)
+	_assert_true(arc_ps.night_intensity > 0.9 and arc_ps.taxi._headlights_node.visible, "Arcade advances into neon night over elapsed run time")
+	arc_ps._update_atmosphere(PlayScene.ARCADE_CYCLE_DURATION * 0.22)
+	_assert_true(arc_ps.night_intensity == 0.0, "Arcade loops cleanly back into morning daylight")
+	arc_ps.queue_free()

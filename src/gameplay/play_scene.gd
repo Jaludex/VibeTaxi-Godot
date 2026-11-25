@@ -4,7 +4,28 @@ extends Node2D
 ## Main gameplay scene orchestrating CityMap, Taxi, AI systems, RuleStrategy, and HUD.
 
 const PASSENGER_SCENE: PackedScene = preload("res://src/entities/passenger.tscn")
+const ARCADE_CYCLE_DURATION: float = 180.0
+const ZEN_CYCLE_DURATION: float = 240.0
 
+const WORKDAY_LIGHT_STOPS: Array[Dictionary] = [
+	{"t": 0.00, "color": Color(1.00, 0.98, 0.93)}, # Morning
+	{"t": 0.30, "color": Color(1.00, 1.00, 1.00)}, # Midday
+	{"t": 0.62, "color": Color(0.98, 0.72, 0.56)}, # Sunset
+	{"t": 0.80, "color": Color(0.68, 0.52, 0.78)}, # Dusk
+	{"t": 1.00, "color": Color(0.38, 0.44, 0.72)}, # Neon night
+]
+
+const LOOP_LIGHT_STOPS: Array[Dictionary] = [
+	{"t": 0.00, "color": Color(1.00, 0.98, 0.93)}, # Morning
+	{"t": 0.25, "color": Color(1.00, 1.00, 1.00)}, # Midday
+	{"t": 0.48, "color": Color(0.98, 0.72, 0.56)}, # Sunset
+	{"t": 0.62, "color": Color(0.68, 0.52, 0.78)}, # Dusk
+	{"t": 0.78, "color": Color(0.38, 0.44, 0.72)}, # Neon night
+	{"t": 0.92, "color": Color(0.86, 0.72, 0.80)}, # Dawn
+	{"t": 1.00, "color": Color(1.00, 0.98, 0.93)}, # Morning
+]
+
+@onready var _atmosphere: CanvasModulate = $AtmosphereModulate
 @onready var _city_map: CityMap = $CityMap
 @onready var _traffic_system: TrafficSystem = $TrafficSystem
 @onready var _pedestrian_system: PedestrianSystem = $PedestrianSystem
@@ -41,6 +62,9 @@ var _tutorial_completed: bool = false
 var _game_over_triggered: bool = false
 var _was_vibe: bool = false
 var _danger_timer: float = 0.0
+var _workday_duration: float = GameConstants.WORKDAY_TIME_LIMIT
+var _atmosphere_elapsed: float = 0.0
+var night_intensity: float = 0.0
 @onready var _delivery_circle: Node2D = $DeliveryCircle
 @onready var _mouse_particles: CPUParticles2D = $MouseParticles
 
@@ -133,6 +157,10 @@ func _initialize_run(params: Dictionary) -> void:
 		_tutorial_vibe_shown = false
 		_tutorial_initial_time = rule_strategy.time_remaining
 
+	_workday_duration = maxf(1.0, float(params.get("time_limit", GameConstants.WORKDAY_TIME_LIMIT)))
+	_atmosphere_elapsed = 0.0
+	_update_atmosphere(0.0)
+
 	AudioManager.start_ambient("city_soundscape", 0.5)
 	AudioManager.play_sfx("engine_start", 0.4, &"Engine")
 
@@ -197,6 +225,7 @@ func _process(delta: float) -> void:
 		_trigger_end_of_run()
 		return
 
+	_update_atmosphere(delta)
 	_update_ambient_ducking()
 	_update_mouse_particles()
 	_update_passengers(delta)
@@ -230,6 +259,50 @@ func _open_pause_menu() -> void:
 	taxi.reset_inputs()
 	var pause_scene: PackedScene = load("res://src/menus/pause_menu.tscn") as PackedScene
 	GameFlow.push_modal(pause_scene.instantiate() as Control, true)
+
+
+func _update_atmosphere(delta: float) -> void:
+	if _atmosphere == null or rule_strategy == null:
+		return
+	var color: Color = Color.WHITE
+	if rule_strategy is WorkdayStrategy:
+		var progress: float = clampf(1.0 - (rule_strategy.time_remaining / _workday_duration), 0.0, 1.0)
+		color = evaluate_atmosphere_color(progress, false)
+	elif rule_strategy is ArcadeStrategy:
+		if not tutorial_mode:
+			_atmosphere_elapsed += delta
+		color = evaluate_atmosphere_color(fposmod(_atmosphere_elapsed / ARCADE_CYCLE_DURATION, 1.0), true)
+	elif rule_strategy is ZenStrategy:
+		if not tutorial_mode:
+			_atmosphere_elapsed += delta
+		color = evaluate_atmosphere_color(fposmod(_atmosphere_elapsed / ZEN_CYCLE_DURATION, 1.0), true)
+	else:
+		color = evaluate_atmosphere_color(0.15, false)
+
+	_atmosphere.color = color
+	night_intensity = compute_night_intensity(color)
+	if taxi != null:
+		taxi.set_night_intensity(night_intensity)
+	if _traffic_system != null:
+		_traffic_system.set_night_intensity(night_intensity)
+
+
+static func evaluate_atmosphere_color(progress: float, looping: bool) -> Color:
+	var stops: Array[Dictionary] = LOOP_LIGHT_STOPS if looping else WORKDAY_LIGHT_STOPS
+	var t: float = fposmod(progress, 1.0) if looping else clampf(progress, 0.0, 1.0)
+	for i in range(stops.size() - 1):
+		var a: Dictionary = stops[i]
+		var b: Dictionary = stops[i + 1]
+		var ta: float = float(a["t"])
+		var tb: float = float(b["t"])
+		if t <= tb:
+			var span: float = maxf(0.0001, tb - ta)
+			return (a["color"] as Color).lerp(b["color"] as Color, clampf((t - ta) / span, 0.0, 1.0))
+	return stops.back()["color"] as Color
+
+
+static func compute_night_intensity(modulate_color: Color) -> float:
+	return clampf((0.88 - modulate_color.get_luminance()) / 0.44, 0.0, 1.0)
 
 
 func _update_ambient_ducking() -> void:
