@@ -31,6 +31,11 @@ var city_map: CityMap = null
 var _prev_colliders: Dictionary = {}
 var _collision_cooldowns: Dictionary = {}
 var _silhouette_sprite: Sprite2D = null
+var _headlights_node: Node2D = null
+var _night_intensity: float = 0.0
+var _last_brake_glow: bool = false
+var headlight_reach: float = 42.0
+var headlight_alpha: float = 0.16
 
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
@@ -65,7 +70,85 @@ func _ready() -> void:
 	if vehicle_def != null:
 		apply_vehicle_resource(vehicle_def)
 	set_heading(heading_angle)
+	_setup_headlights()
 	_sync_visual_and_hitbox()
+
+
+func _setup_headlights() -> void:
+	if _headlights_node != null:
+		return
+	_headlights_node = Node2D.new()
+	_headlights_node.name = "Headlights"
+	_headlights_node.z_index = -1
+	var mat: CanvasItemMaterial = CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	mat.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
+	_headlights_node.material = mat
+	_headlights_node.visible = false
+	_headlights_node.draw.connect(_draw_headlights)
+	add_child(_headlights_node)
+
+
+func set_night_intensity(intensity: float) -> void:
+	var clamped: float = clampf(intensity, 0.0, 1.0)
+	var brake_now: bool = is_brake_light_on()
+	if absf(clamped - _night_intensity) < 0.008 and brake_now == _last_brake_glow:
+		return
+	_night_intensity = clamped
+	_last_brake_glow = brake_now
+	if _headlights_node == null:
+		return
+	var show_lights: bool = _night_intensity > 0.02 or brake_now
+	_headlights_node.visible = show_lights
+	if show_lights:
+		_headlights_node.queue_redraw()
+
+
+func is_brake_light_on() -> bool:
+	return false
+
+
+func _draw_headlights() -> void:
+	var sz: Vector2 = sprite.region_rect.size if sprite != null else Vector2(14.0, 28.0)
+	var half_w: float = sz.x * 0.5
+	var half_h: float = sz.y * 0.5
+	var lamp_x: float = half_w * 0.56
+
+	if _night_intensity > 0.02 and not is_crashed:
+		var a_outer: float = _night_intensity * headlight_alpha
+		var a_inner: float = _night_intensity * (headlight_alpha * 0.65)
+		var c_outer: Color = Color(1.0, 0.96, 0.80, a_outer)
+		var c_inner: Color = Color(1.0, 0.98, 0.88, a_inner)
+		var c_fade: Color = Color(1.0, 0.96, 0.80, 0.0)
+		var spread: float = half_w * 1.65
+		var inner_reach: float = headlight_reach * 0.45
+		for side in [-1.0, 1.0]:
+			var lx: float = side * lamp_x
+			var outer_pts: PackedVector2Array = PackedVector2Array([
+				Vector2(lx - 1.3, -half_h + 1.0),
+				Vector2(lx + 1.3, -half_h + 1.0),
+				Vector2(lx + spread, -half_h - headlight_reach),
+				Vector2(lx - spread, -half_h - headlight_reach),
+			])
+			_headlights_node.draw_polygon(outer_pts, PackedColorArray([c_outer, c_outer, c_fade, c_fade]))
+			var inner_pts: PackedVector2Array = PackedVector2Array([
+				Vector2(lx - 1.0, -half_h + 1.0),
+				Vector2(lx + 1.0, -half_h + 1.0),
+				Vector2(lx + spread * 0.55, -half_h - inner_reach),
+				Vector2(lx - spread * 0.55, -half_h - inner_reach),
+			])
+			_headlights_node.draw_polygon(inner_pts, PackedColorArray([c_inner, c_inner, c_fade, c_fade]))
+			_headlights_node.draw_circle(Vector2(lx, -half_h + 0.5), 1.6, Color(1.0, 0.99, 0.9, minf(0.55, a_outer * 1.6)))
+
+	var brake_now: bool = is_brake_light_on()
+	var tail_a: float = 0.52 if brake_now else _night_intensity * 0.25
+	if tail_a > 0.02 and not is_crashed:
+		var halo_r: float = 4.0 if brake_now else 2.5
+		var core_r: float = 1.6 if brake_now else 1.2
+		for side in [-1.0, 1.0]:
+			var pos: Vector2 = Vector2(side * lamp_x, half_h - 0.5)
+			_headlights_node.draw_circle(pos, halo_r, Color(1.0, 0.12, 0.08, tail_a * 0.35))
+			_headlights_node.draw_circle(pos, core_r, Color(1.0, 0.25, 0.18, tail_a))
 
 
 func _exit_tree() -> void:
@@ -106,6 +189,8 @@ func _sync_visual_and_hitbox() -> void:
 		_silhouette_sprite.region_rect = rect
 	if collision_shape != null and collision_shape.shape is RectangleShape2D:
 		(collision_shape.shape as RectangleShape2D).size = rect.size
+	if _headlights_node != null and _headlights_node.visible:
+		_headlights_node.queue_redraw()
 
 
 func set_heading(angle_rad: float) -> void:

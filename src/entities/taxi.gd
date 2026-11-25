@@ -30,6 +30,8 @@ var _engine_players: Dictionary = {}
 
 
 func _ready() -> void:
+	headlight_reach = 58.0
+	headlight_alpha = 0.24
 	if vehicle_def == null:
 		apply_vehicle_def("yellow_taxi")
 		max_health = GameConstants.TAXI_MAX_HEALTH
@@ -37,6 +39,10 @@ func _ready() -> void:
 	super._ready()
 	target_position = global_position
 	_setup_engine_audio()
+
+
+func is_brake_light_on() -> bool:
+	return is_braking and not is_crashed
 
 
 func attach_to_map(map: CityMap) -> void:
@@ -320,6 +326,10 @@ func _update_ghosting(delta: float) -> void:
 	ghost.global_position = global_position
 	ghost.rotation = rotation
 	ghost.z_index = 5
+	var ghost_mat: CanvasItemMaterial = CanvasItemMaterial.new()
+	ghost_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	ghost_mat.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
+	ghost.material = ghost_mat
 	ghost.modulate = Color(vibe_color.r, vibe_color.g, vibe_color.b, GameConstants.GHOSTING_ALPHA_START)
 	city_map.get_entities_root().add_child(ghost)
 	var tween: Tween = ghost.create_tween()

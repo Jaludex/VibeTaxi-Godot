@@ -11,8 +11,19 @@ var city_map: CityMap = null
 var nodes: Dictionary = {}
 var active_cars: Array[TrafficCar] = []
 var camera_ref: Camera2D = null
+var night_intensity: float = 0.0
 
 var _spawn_timer: float = 0.0
+
+
+func set_night_intensity(intensity: float) -> void:
+	var clamped: float = clampf(intensity, 0.0, 1.0)
+	if absf(clamped - night_intensity) < 0.008:
+		return
+	night_intensity = clamped
+	for car in active_cars:
+		if is_instance_valid(car):
+			car.set_night_intensity(night_intensity)
 
 
 func setup(p_city_map: CityMap) -> void:
@@ -165,6 +176,7 @@ func try_spawn_car() -> TrafficCar:
 	var car: TrafficCar = TRAFFIC_CAR_SCENE.instantiate() as TrafficCar
 	city_map.get_entities_root().add_child(car)
 	car.setup_traffic_def(chosen_def, spawn_pos as Vector2, next_pos as Vector2, get_node_next(next_name), self)
+	car.set_night_intensity(night_intensity)
 	active_cars.append(car)
 	return car
 
