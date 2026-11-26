@@ -576,6 +576,8 @@ func _test_discord_rpc() -> void:
 	add_child(title_sc)
 	var btn_tut: Button = title_sc.get_node("UILayer/ButtonsRoot/BtnTutorial") as Button
 	_assert_true(btn_tut.theme_type_variation == &"ActiveButton", "TitleScreen highlights Tutorial button when tutorial_enabled is true")
+	var title_logo: TextureRect = title_sc.get_node_or_null("UILayer/TitleLogo") as TextureRect
+	_assert_true(title_logo != null and title_logo.texture != null and title_sc.get_node_or_null("UILayer/TitleLabel") == null, "TitleScreen displays graphic TitleLogo instead of text TitleLabel")
 	title_sc.queue_free()
 
 	for m in ["workday", "arcade", "zen"]:

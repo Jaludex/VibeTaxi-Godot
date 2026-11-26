@@ -7,7 +7,6 @@ extends Node2D
 @onready var _pedestrian_system: PedestrianSystem = $PedestrianSystem
 @onready var _camera: Camera2D = $Camera2D
 @onready var _scene_fade: ColorRect = $UILayer/SceneFade
-@onready var _title_label: Label = $UILayer/TitleLabel
 @onready var _hint_label: Label = $UILayer/HintLabel
 @onready var _version_label: Label = $UILayer/VersionLabel
 
@@ -77,7 +76,6 @@ func _ready() -> void:
 
 
 func _refresh_ui() -> void:
-	_title_label.text = I18n.t("game_title")
 	_hint_label.text = I18n.t("fullscreen_hint")
 	_version_label.text = I18n.t("version", {"version": GameConstants.VERSION})
 
