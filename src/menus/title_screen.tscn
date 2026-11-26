@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://0n76ta15c3qm" path="res://src/world/traffic_system.gd" id="3"]
 [ext_resource type="Script" uid="uid://buhwrxe1v2ii8" path="res://src/world/pedestrian_system.gd" id="4"]
 [ext_resource type="Texture2D" uid="uid://bki0hujo5vlqv" path="res://assets/graphics/title_gradient.png" id="5"]
-[ext_resource type="FontFile" path="res://assets/fonts/Big.ttf" id="6"]
+[ext_resource type="Texture2D" uid="uid://cjpuny6voxts7" path="res://assets/graphics/boot_splash.png" id="6"]
 
 [node name="TitleScreen" type="Node2D" unique_id=2094126367]
 script = ExtResource("1")
@@ -170,26 +170,23 @@ grow_horizontal = 0
 grow_vertical = 0
 text = "Options"
 
-[node name="TitleLabel" type="Label" parent="UILayer" unique_id=645764087]
+[node name="TitleLogo" type="TextureRect" parent="UILayer" unique_id=645764087]
+texture_filter = 2
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -60.0
-offset_right = 200.0
-offset_bottom = -15.0
+offset_left = -150.0
+offset_top = -142.0
+offset_right = 150.0
+offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(1, 0.8627451, 0.19607843, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
-theme_override_fonts/font = ExtResource("6")
-theme_override_font_sizes/font_size = 32
-text = "Vibe Taxi"
-horizontal_alignment = 1
+mouse_filter = 2
+texture = ExtResource("6")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="HintLabel" type="Label" parent="UILayer" unique_id=888843214]
 anchors_preset = 2
