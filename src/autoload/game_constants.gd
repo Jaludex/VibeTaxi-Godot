@@ -4,7 +4,7 @@ extends RefCounted
 ## Central registry of balanced gameplay constants, definitions, and visual palettes.
 
 const TITLE: String = "Vibe Taxi"
-const VERSION: String = "2.0.0"
+const VERSION: String = "2.1.0"
 
 const VIRTUAL_WIDTH: int = 640
 const VIRTUAL_HEIGHT: int = 360

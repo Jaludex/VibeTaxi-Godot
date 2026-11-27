@@ -5,6 +5,10 @@ extends Node2D
 
 const PROP_SCENE: PackedScene = preload("res://src/world/prop.tscn")
 const BURST_SCENE: PackedScene = preload("res://src/effects/burst_particles.tscn")
+const NIGHT_GLOW_TEXTURE: Texture2D = preload("res://assets/graphics/city_tileset_night_glow.png")
+const NIGHT_GLOW_LAYERS: Array[String] = ["decoration-low", "buildings", "decoration-high", "overheads"]
+const NIGHT_GLOW_TINT: Color = Color(0.96, 0.90, 0.72, 1.0)
+const NIGHT_GLOW_MAX_ALPHA: float = 0.82
 
 @onready var _layers_root: Node2D = $MapLayers
 @onready var _walls_body: StaticBody2D = $WallsBody
@@ -27,6 +31,8 @@ var taxi_spawns: Array[Vector2] = []
 var tutorial_triggers: Array[Dictionary] = []
 
 var _overheads_layer: TileMapLayer = null
+var _night_glow_layers: Array[TileMapLayer] = []
+var _night_intensity: float = 0.0
 
 
 func _ready() -> void:
@@ -45,6 +51,7 @@ func load_map(p_map_key: String = "city", spawn_props: bool = true) -> void:
 		if level != null:
 			_load_from_baked_level(level, spawn_props)
 			level.free()
+			_build_night_glow_layers()
 			if _debug_overlay != null:
 				_debug_overlay.queue_redraw()
 			return
@@ -56,6 +63,7 @@ func load_map(p_map_key: String = "city", spawn_props: bool = true) -> void:
 	pixel_size = parsed["pixel_size"] as Vector2
 	tile_layers = TiledMapLoader.build_tilemap_layers(parsed, _layers_root)
 	_overheads_layer = tile_layers.get("overheads", null) as TileMapLayer
+	_build_night_glow_layers()
 
 	collision_rects = parsed["collisions"] as Array[Rect2]
 	landmark_nodes = parsed["landmark_nodes"] as Dictionary
@@ -126,7 +134,72 @@ func _clear_existing() -> void:
 	if _ground_effects.has_method("clear_marks"):
 		_ground_effects.call("clear_marks")
 	tile_layers.clear()
+	_night_glow_layers.clear()
+	_night_intensity = 0.0
 	_overheads_layer = null
+
+
+func _build_night_glow_layers() -> void:
+	_night_glow_layers.clear()
+	var glow_tileset: TileSet = null
+	var glow_mat: CanvasItemMaterial = CanvasItemMaterial.new()
+	glow_mat.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
+
+	for lname in NIGHT_GLOW_LAYERS:
+		var src: TileMapLayer = tile_layers.get(lname, null) as TileMapLayer
+		if src == null or src.tile_set == null:
+			continue
+		if glow_tileset == null:
+			glow_tileset = _create_night_glow_tileset(src.tile_set)
+			if glow_tileset == null:
+				return
+		var glow_layer: TileMapLayer = TileMapLayer.new()
+		glow_layer.name = lname + "_night_glow"
+		glow_layer.tile_set = glow_tileset
+		glow_layer.tile_map_data = src.tile_map_data
+		glow_layer.z_index = src.z_index
+		glow_layer.collision_enabled = false
+		glow_layer.navigation_enabled = false
+		glow_layer.material = glow_mat
+		glow_layer.visible = false
+		glow_layer.modulate = Color(NIGHT_GLOW_TINT.r, NIGHT_GLOW_TINT.g, NIGHT_GLOW_TINT.b, 0.0)
+		_layers_root.add_child(glow_layer)
+		_layers_root.move_child(glow_layer, src.get_index() + 1)
+		_night_glow_layers.append(glow_layer)
+
+
+func _create_night_glow_tileset(base_ts: TileSet) -> TileSet:
+	var glow_ts: TileSet = TileSet.new()
+	glow_ts.tile_size = base_ts.tile_size
+	var added_city: bool = false
+	for i in base_ts.get_source_count():
+		var sid: int = base_ts.get_source_id(i)
+		var atlas: TileSetAtlasSource = base_ts.get_source(sid) as TileSetAtlasSource
+		if atlas == null or atlas.texture == null:
+			continue
+		if not atlas.texture.resource_path.ends_with("city_tileset.png"):
+			continue
+		var cloned: TileSetAtlasSource = atlas.duplicate() as TileSetAtlasSource
+		cloned.texture = NIGHT_GLOW_TEXTURE
+		glow_ts.add_source(cloned, sid)
+		added_city = true
+	return glow_ts if added_city else null
+
+
+func set_night_intensity(intensity: float) -> void:
+	var clamped: float = clampf(intensity, 0.0, 1.0)
+	if absf(clamped - _night_intensity) < 0.008:
+		return
+	_night_intensity = clamped
+	# Fade building lights in smoothly once dusk starts, staying off in daylight.
+	var alpha: float = clampf((_night_intensity - 0.12) / 0.72, 0.0, 1.0) * NIGHT_GLOW_MAX_ALPHA
+	var show_glow: bool = alpha > 0.01
+	var col: Color = Color(NIGHT_GLOW_TINT.r, NIGHT_GLOW_TINT.g, NIGHT_GLOW_TINT.b, alpha)
+	for layer in _night_glow_layers:
+		if is_instance_valid(layer):
+			layer.visible = show_glow
+			if show_glow:
+				layer.modulate = col
 
 
 func _build_wall_colliders() -> void:

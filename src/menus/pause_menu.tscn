@@ -51,6 +51,15 @@ offset_right = 160.0
 offset_bottom = 69.0
 text = "Continue"
 
+[node name="BtnSkipTutorial" type="Button" parent="Panel"]
+visible = false
+layout_mode = 0
+offset_left = 40.0
+offset_top = 76.0
+offset_right = 160.0
+offset_bottom = 100.0
+text = "Skip Tutorial"
+
 [node name="BtnOptions" type="Button" parent="Panel"]
 layout_mode = 0
 offset_left = 40.0

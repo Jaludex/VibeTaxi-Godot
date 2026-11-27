@@ -99,6 +99,9 @@ func _refresh_dialogues() -> void:
 
 
 func _ready() -> void:
+	var mat: CanvasItemMaterial = CanvasItemMaterial.new()
+	mat.light_mode = CanvasItemMaterial.LIGHT_MODE_UNSHADED
+	_pickup_circle.material = mat
 	_pickup_circle.draw.connect(_draw_pickup_circle)
 	_set_anim("idle")
 	_redraw_pickup_circle()

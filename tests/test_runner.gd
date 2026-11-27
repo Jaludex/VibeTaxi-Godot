@@ -10,7 +10,10 @@ func _ready() -> void:
 	await get_tree().process_frame
 	_run_all_tests()
 	await get_tree().process_frame
+	GameFlow.clear_modals()
 	await get_tree().process_frame
+	AudioManager.stop_all_audio()
+	await get_tree().create_timer(0.15).timeout
 	print("TEST SUMMARY: %d passed, %d failed" % [_passed, _failed])
 	get_tree().quit(0 if _failed == 0 else 1)
 
@@ -36,6 +39,8 @@ func _run_all_tests() -> void:
 	_test_all_scenes_instantiate()
 	_test_touch_and_mobile()
 	_test_discord_rpc()
+	_test_day_night_atmosphere()
+	_test_tutorial_ux()
 
 
 func _test_tiled_parsing() -> void:
@@ -390,6 +395,18 @@ func _test_touch_and_mobile() -> void:
 	radio.position = Vector2.ZERO
 	radio.size = Vector2(480.0, 64.0)
 	_assert_true(radio.handle_pointer_at(Vector2(300.0, 32.0)) and radio.current_index == 1, "RadioTuner tap right advances station")
+	_assert_true(radio._pending_tune_delay > 0.0 and not AudioManager.get_music_player().playing, "RadioTuner debounces track load during rapid station switches")
+	radio._process(RadioTuner.TUNE_DEBOUNCE_SEC + 0.05)
+	_assert_true(AudioManager.get_music_player().playing, "RadioTuner starts playback once debounce elapses")
+	_assert_true(AudioManager.get_music_player().playback_type == AudioServer.PLAYBACK_TYPE_STREAM, "AudioManager streams music instead of Web Sample decoding")
+	var cached_a: AudioStream = AudioManager.get_music_stream(rock_def.track_paths[0])
+	var cached_b: AudioStream = AudioManager.get_music_stream(rock_def.track_paths[0])
+	_assert_true(cached_a != null and cached_a == cached_b, "AudioManager caches loaded music streams across station switches")
+	AudioManager.queue_web_music_prewarm()
+	var queued_count: int = AudioManager._prewarm_queue.size()
+	_assert_true(queued_count >= 20 and AudioManager.is_music_prewarm_pending(), "AudioManager queues all remaining radio tracks for Web prewarm (%d queued)" % queued_count)
+	AudioManager._prewarm_queue.clear()
+	AudioManager.set_process(false)
 	_assert_true(radio.handle_pointer_at(Vector2(150.0, 32.0)) and radio.current_index == 0, "RadioTuner tap left goes to prev station")
 	radio.queue_free()
 
@@ -560,6 +577,8 @@ func _test_discord_rpc() -> void:
 	add_child(title_sc)
 	var btn_tut: Button = title_sc.get_node("UILayer/ButtonsRoot/BtnTutorial") as Button
 	_assert_true(btn_tut.theme_type_variation == &"ActiveButton", "TitleScreen highlights Tutorial button when tutorial_enabled is true")
+	var title_logo: TextureRect = title_sc.get_node_or_null("UILayer/TitleLogo") as TextureRect
+	_assert_true(title_logo != null and title_logo.texture != null and title_sc.get_node_or_null("UILayer/TitleLabel") == null, "TitleScreen displays graphic TitleLogo instead of text TitleLabel")
 	title_sc.queue_free()
 
 	for m in ["workday", "arcade", "zen"]:
@@ -568,5 +587,96 @@ func _test_discord_rpc() -> void:
 		add_child(ps_m)
 		_assert_true(ps_m.tutorial_mode, "PlayScene enables integrated tutorial_mode in %s when tutorial_enabled is true" % m)
 		ps_m.queue_free()
+
+	GameFlow.set_tutorial_enabled(prev_tut)
+
+
+func _test_day_night_atmosphere() -> void:
+	var morning: Color = PlayScene.evaluate_atmosphere_color(0.0, false)
+	var sunset: Color = PlayScene.evaluate_atmosphere_color(0.62, false)
+	var night: Color = PlayScene.evaluate_atmosphere_color(1.0, false)
+	_assert_true(PlayScene.compute_night_intensity(morning) == 0.0, "Workday morning has zero night intensity")
+	_assert_true(sunset.r > sunset.b and PlayScene.compute_night_intensity(sunset) > 0.1, "Workday sunset tints warm amber and begins turning lights on")
+	_assert_true(night.b > night.r and PlayScene.compute_night_intensity(night) > 0.9, "Workday night shifts to indigo with full night intensity")
+
+	var loop_start: Color = PlayScene.evaluate_atmosphere_color(0.0, true)
+	var loop_end: Color = PlayScene.evaluate_atmosphere_color(1.0, true)
+	_assert_true(loop_start.is_equal_approx(loop_end), "Arcade/Zen atmosphere curve loops seamlessly from morning back to morning")
+
+	GameFlow.pending_play_params = {"mode": "workday", "tutorial_mode": false}
+	var wd_ps: PlayScene = (load("res://src/gameplay/play_scene.tscn") as PackedScene).instantiate() as PlayScene
+	add_child(wd_ps)
+	_assert_true(wd_ps.night_intensity == 0.0 and not wd_ps.taxi._headlights_node.visible, "Workday starts in daylight with taxi headlights off")
+	_assert_true(wd_ps._city_map._night_glow_layers.size() == 4 and not wd_ps._city_map._night_glow_layers[0].visible, "CityMap builds 4 unshaded night-glow layers hidden in daylight")
+	wd_ps.rule_strategy.time_remaining = 0.0
+	wd_ps._update_atmosphere(0.0)
+	_assert_true(wd_ps.night_intensity > 0.9 and wd_ps.taxi._headlights_node.visible, "Workday turns on taxi headlights at night")
+	_assert_true(wd_ps._city_map._night_glow_layers[1].visible and wd_ps._city_map._night_glow_layers[1].modulate.a > 0.5, "CityMap lights up building windows at night")
+	wd_ps.queue_free()
+
+	GameFlow.pending_play_params = {"mode": "arcade", "tutorial_mode": false}
+	var arc_ps: PlayScene = (load("res://src/gameplay/play_scene.tscn") as PackedScene).instantiate() as PlayScene
+	add_child(arc_ps)
+	arc_ps._update_atmosphere(PlayScene.ARCADE_CYCLE_DURATION * 0.78)
+	_assert_true(arc_ps.night_intensity > 0.9 and arc_ps.taxi._headlights_node.visible, "Arcade advances into neon night over elapsed run time")
+	arc_ps._update_atmosphere(PlayScene.ARCADE_CYCLE_DURATION * 0.22)
+	_assert_true(arc_ps.night_intensity == 0.0, "Arcade loops cleanly back into morning daylight")
+	arc_ps.queue_free()
+
+
+func _test_tutorial_ux() -> void:
+	var prev_tut: bool = GameFlow.tutorial_enabled
+	GameFlow.set_tutorial_enabled(true)
+
+	# 1. Workday tutorial mode shows explicit TUTORIAL state on Taximeter, banner, and active pickup arrow
+	GameFlow.pending_play_params = {"mode": "workday", "tutorial_mode": true}
+	var ps: PlayScene = (load("res://src/gameplay/play_scene.tscn") as PackedScene).instantiate() as PlayScene
+	add_child(ps)
+	_assert_true(ps._taximeter._time_title.text == I18n.t("hud_tutorial"), "Taximeter displays TUTORIAL title while tutorial_mode is active")
+	_assert_true(ps._tutorial_banner.visible and ps._tutorial_objective.text == I18n.t("tutorial_obj_pickup"), "PlayScene displays persistent step-1 pickup objective banner")
+	ps._update_hud_displays(0.1)
+	_assert_true(ps._arrow.active and ps._arrow.visible, "Step-1 tutorial activates DestinationArrow toward nearest waiting passenger")
+
+	# 2. Idle pickup reminder fires once after TUTORIAL_REMINDER_DELAY
+	ps._tutorial_welcome_shown = true
+	ps._update_hud_displays(PlayScene.TUTORIAL_REMINDER_DELAY + 0.5)
+	_assert_true(ps._tutorial_reminder_shown and ps._center_popup.text == I18n.t("tutorial_reminder_pickup"), "Tutorial triggers gentle pickup reminder after idle threshold")
+
+	# 3. Objective updates cleanly in step 2 (radio -> deliver once music matches)
+	if not ps.waiting_passengers.is_empty():
+		var pax: Passenger = ps.waiting_passengers[0]
+		ps.active_passenger = pax
+		ps._tutorial_step = 2
+		ps._radio.current_index = 0
+		ps._update_tutorial_ui()
+		_assert_true(ps._tutorial_objective.text == I18n.t("tutorial_obj_radio"), "Step-2 tutorial objective prompts tuning radio before music matches")
+		ps.taxi.set_vibe_mode(true)
+		ps._update_tutorial_ui()
+		_assert_true(ps._tutorial_objective.text == I18n.t("tutorial_obj_deliver"), "Step-2 tutorial objective prompts delivery once Vibe/music is ready")
+		ps.active_passenger = null
+		ps.taxi.set_vibe_mode(false)
+
+	# 4. PauseMenuModal exposes Skip Tutorial only when skippable
+	var pm_skip: PauseMenuModal = (load("res://src/menus/pause_menu.tscn") as PackedScene).instantiate() as PauseMenuModal
+	pm_skip.set_tutorial_skippable(true)
+	add_child(pm_skip)
+	_assert_true(pm_skip._btn_skip_tutorial.visible, "PauseMenuModal shows Skip Tutorial button during tutorial_mode")
+	pm_skip.queue_free()
+
+	var pm_normal: PauseMenuModal = (load("res://src/menus/pause_menu.tscn") as PackedScene).instantiate() as PauseMenuModal
+	pm_normal.set_tutorial_skippable(false)
+	add_child(pm_normal)
+	_assert_true(not pm_normal._btn_skip_tutorial.visible, "PauseMenuModal hides Skip Tutorial button outside tutorial_mode")
+	pm_normal.queue_free()
+
+	# 5. Skipping tutorial unfreezes timer, resets Taximeter, hides banner, and deactivates step-1 arrow
+	ps.skip_tutorial()
+	_assert_true(not ps.tutorial_mode and not GameFlow.tutorial_enabled, "skip_tutorial disables tutorial_mode and persists tutorial_enabled=false")
+	_assert_true(not ps._tutorial_banner.visible and ps._taximeter._time_title.text == I18n.t("hud_time"), "skip_tutorial hides banner and restores Taximeter TIME header")
+	_assert_true(not ps._arrow.active, "skip_tutorial deactivates step-1 pickup arrow when no passenger is riding")
+	var t_before: float = ps.rule_strategy.time_remaining
+	ps._process(1.0)
+	_assert_true(ps.rule_strategy.time_remaining < t_before, "Shift timer resumes counting down immediately after skip_tutorial")
+	ps.queue_free()
 
 	GameFlow.set_tutorial_enabled(prev_tut)
