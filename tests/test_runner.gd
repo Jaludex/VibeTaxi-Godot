@@ -40,6 +40,7 @@ func _run_all_tests() -> void:
 	_test_touch_and_mobile()
 	_test_discord_rpc()
 	_test_day_night_atmosphere()
+	_test_tutorial_ux()
 
 
 func _test_tiled_parsing() -> void:
@@ -621,3 +622,61 @@ func _test_day_night_atmosphere() -> void:
 	arc_ps._update_atmosphere(PlayScene.ARCADE_CYCLE_DURATION * 0.22)
 	_assert_true(arc_ps.night_intensity == 0.0, "Arcade loops cleanly back into morning daylight")
 	arc_ps.queue_free()
+
+
+func _test_tutorial_ux() -> void:
+	var prev_tut: bool = GameFlow.tutorial_enabled
+	GameFlow.set_tutorial_enabled(true)
+
+	# 1. Workday tutorial mode shows explicit TUTORIAL state on Taximeter, banner, and active pickup arrow
+	GameFlow.pending_play_params = {"mode": "workday", "tutorial_mode": true}
+	var ps: PlayScene = (load("res://src/gameplay/play_scene.tscn") as PackedScene).instantiate() as PlayScene
+	add_child(ps)
+	_assert_true(ps._taximeter._time_title.text == I18n.t("hud_tutorial"), "Taximeter displays TUTORIAL title while tutorial_mode is active")
+	_assert_true(ps._tutorial_banner.visible and ps._tutorial_objective.text == I18n.t("tutorial_obj_pickup"), "PlayScene displays persistent step-1 pickup objective banner")
+	ps._update_hud_displays(0.1)
+	_assert_true(ps._arrow.active and ps._arrow.visible, "Step-1 tutorial activates DestinationArrow toward nearest waiting passenger")
+
+	# 2. Idle pickup reminder fires once after TUTORIAL_REMINDER_DELAY
+	ps._tutorial_welcome_shown = true
+	ps._update_hud_displays(PlayScene.TUTORIAL_REMINDER_DELAY + 0.5)
+	_assert_true(ps._tutorial_reminder_shown and ps._center_popup.text == I18n.t("tutorial_reminder_pickup"), "Tutorial triggers gentle pickup reminder after idle threshold")
+
+	# 3. Objective updates cleanly in step 2 (radio -> deliver once music matches)
+	if not ps.waiting_passengers.is_empty():
+		var pax: Passenger = ps.waiting_passengers[0]
+		ps.active_passenger = pax
+		ps._tutorial_step = 2
+		ps._radio.current_index = 0
+		ps._update_tutorial_ui()
+		_assert_true(ps._tutorial_objective.text == I18n.t("tutorial_obj_radio"), "Step-2 tutorial objective prompts tuning radio before music matches")
+		ps.taxi.set_vibe_mode(true)
+		ps._update_tutorial_ui()
+		_assert_true(ps._tutorial_objective.text == I18n.t("tutorial_obj_deliver"), "Step-2 tutorial objective prompts delivery once Vibe/music is ready")
+		ps.active_passenger = null
+		ps.taxi.set_vibe_mode(false)
+
+	# 4. PauseMenuModal exposes Skip Tutorial only when skippable
+	var pm_skip: PauseMenuModal = (load("res://src/menus/pause_menu.tscn") as PackedScene).instantiate() as PauseMenuModal
+	pm_skip.set_tutorial_skippable(true)
+	add_child(pm_skip)
+	_assert_true(pm_skip._btn_skip_tutorial.visible, "PauseMenuModal shows Skip Tutorial button during tutorial_mode")
+	pm_skip.queue_free()
+
+	var pm_normal: PauseMenuModal = (load("res://src/menus/pause_menu.tscn") as PackedScene).instantiate() as PauseMenuModal
+	pm_normal.set_tutorial_skippable(false)
+	add_child(pm_normal)
+	_assert_true(not pm_normal._btn_skip_tutorial.visible, "PauseMenuModal hides Skip Tutorial button outside tutorial_mode")
+	pm_normal.queue_free()
+
+	# 5. Skipping tutorial unfreezes timer, resets Taximeter, hides banner, and deactivates step-1 arrow
+	ps.skip_tutorial()
+	_assert_true(not ps.tutorial_mode and not GameFlow.tutorial_enabled, "skip_tutorial disables tutorial_mode and persists tutorial_enabled=false")
+	_assert_true(not ps._tutorial_banner.visible and ps._taximeter._time_title.text == I18n.t("hud_time"), "skip_tutorial hides banner and restores Taximeter TIME header")
+	_assert_true(not ps._arrow.active, "skip_tutorial deactivates step-1 pickup arrow when no passenger is riding")
+	var t_before: float = ps.rule_strategy.time_remaining
+	ps._process(1.0)
+	_assert_true(ps.rule_strategy.time_remaining < t_before, "Shift timer resumes counting down immediately after skip_tutorial")
+	ps.queue_free()
+
+	GameFlow.set_tutorial_enabled(prev_tut)

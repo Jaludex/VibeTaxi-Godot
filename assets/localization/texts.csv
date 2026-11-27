@@ -302,3 +302,9 @@ Usa las flechas < / > sobre Drift y Freno para cambiar de estación. ¡Poner la 
 
 Ahora sigue la flecha hasta su destino."
 tutorial_integrated_vibe_touch,"Awesome, you're in Vibe Mode! While in Vibe Mode, hold the DRIFT button to drift through corners and keep your speed without losing control.","¡Excelente, estás en Modo Vibe! En Modo Vibe, mantén el botón DRIFT para derrapar en las curvas y mantener tu velocidad."
+btn_skip_tutorial,Skip Tutorial,Saltar Tutorial
+tutorial_obj_pickup,Follow the arrow and pick up a client,Sigue la flecha y recoge un pasajero
+tutorial_obj_radio,Tune the radio to music they like,Sintoniza música que le guste
+tutorial_obj_deliver,Drop them off at the green circle,Llévalo al círculo verde
+tutorial_reminder_pickup,Follow the arrow to pick up a client!,¡Sigue la flecha para recoger un pasajero!
+tutorial_skipped_notice,Tutorial skipped! Shift started.,¡Tutorial omitido! Turno iniciado.

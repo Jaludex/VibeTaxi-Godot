@@ -8,6 +8,7 @@ var active: bool = false
 var _anim_time: float = 0.0
 var _radius_progress: float = 1.0
 var _tween: Tween = null
+var _pulse_tween: Tween = null
 
 
 func _ready() -> void:
@@ -32,6 +33,24 @@ func activate(world_pos: Vector2, animate_outward: bool = true) -> void:
 func deactivate() -> void:
 	active = false
 	visible = false
+	if _pulse_tween != null and _pulse_tween.is_valid():
+		_pulse_tween.kill()
+	scale = Vector2.ONE
+	modulate = Color.WHITE
+
+
+func pulse_highlight() -> void:
+	if not active:
+		return
+	if _pulse_tween != null and _pulse_tween.is_valid():
+		_pulse_tween.kill()
+	scale = Vector2.ONE
+	modulate = Color.WHITE
+	_pulse_tween = create_tween().set_loops(4)
+	_pulse_tween.tween_property(self, "scale", Vector2(1.45, 1.45), 0.28).set_trans(Tween.TRANS_SINE)
+	_pulse_tween.parallel().tween_property(self, "modulate", Color(0.39, 1.0, 1.0, 1.0), 0.28)
+	_pulse_tween.tween_property(self, "scale", Vector2.ONE, 0.28).set_trans(Tween.TRANS_SINE)
+	_pulse_tween.parallel().tween_property(self, "modulate", Color.WHITE, 0.28)
 
 
 func update_arrow(delta: float, camera: Camera2D) -> void:

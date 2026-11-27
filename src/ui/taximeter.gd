@@ -3,6 +3,11 @@ extends Control
 
 ## In-game HUD taximeter displaying shift timer, mode counter (money/score), and delivery side popup.
 
+const TIME_TITLE_COLOR := Color(0.67, 0.67, 0.67, 1.0)
+const TIME_VALUE_COLOR := Color(0.78431374, 0.1764706, 0.28235295, 1.0)
+const TUTORIAL_TITLE_COLOR := Color(0.39, 1.0, 1.0, 1.0)
+const TUTORIAL_VALUE_COLOR := Color(0.55, 0.85, 0.95, 1.0)
+
 @export var side_popup_rise: float = 20.0
 
 @onready var _time_title: Label = $TaximeterSprite/TimeTitle
@@ -18,11 +23,29 @@ var _counter_param: String = ""
 var _side_popup_base_pos: Vector2 = Vector2(78.0, 45.0)
 var _counter_tween: Tween = null
 var _side_popup_tween: Tween = null
+var _tutorial_paused: bool = false
 
 
 func _ready() -> void:
 	_side_popup_base_pos = _side_popup.position
-	_time_title.text = I18n.t("hud_time")
+	I18n.language_changed.connect(_on_language_changed)
+	_refresh_timer_style()
+
+
+func set_tutorial_paused(paused: bool) -> void:
+	_tutorial_paused = paused
+	if is_node_ready():
+		_refresh_timer_style()
+
+
+func _on_language_changed(_lang: String) -> void:
+	_refresh_timer_style()
+
+
+func _refresh_timer_style() -> void:
+	_time_title.text = I18n.t("hud_tutorial") if _tutorial_paused else I18n.t("hud_time")
+	_time_title.add_theme_color_override("font_color", TUTORIAL_TITLE_COLOR if _tutorial_paused else TIME_TITLE_COLOR)
+	_time_value.add_theme_color_override("font_color", TUTORIAL_VALUE_COLOR if _tutorial_paused else TIME_VALUE_COLOR)
 
 
 func configure_counter(info: Dictionary) -> void:
