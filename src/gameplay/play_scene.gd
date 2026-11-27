@@ -6,6 +6,7 @@ extends Node2D
 const PASSENGER_SCENE: PackedScene = preload("res://src/entities/passenger.tscn")
 const ARCADE_CYCLE_DURATION: float = 180.0
 const ZEN_CYCLE_DURATION: float = 240.0
+const TUTORIAL_REMINDER_DELAY: float = 22.0
 
 const WORKDAY_LIGHT_STOPS: Array[Dictionary] = [
 	{"t": 0.00, "color": Color(1.00, 0.98, 0.93)}, # Morning
@@ -34,6 +35,9 @@ const LOOP_LIGHT_STOPS: Array[Dictionary] = [
 @onready var _vibe_tint: ColorRect = $HUDLayer/VibeTint
 @onready var _taximeter: Taximeter = $HUDLayer/Taximeter
 @onready var _mode_badge: Label = $HUDLayer/ModeBadge
+@onready var _tutorial_banner: PanelContainer = $HUDLayer/TutorialBanner
+@onready var _tutorial_tag: Label = $HUDLayer/TutorialBanner/HBox/TagLabel
+@onready var _tutorial_objective: Label = $HUDLayer/TutorialBanner/HBox/ObjectiveLabel
 @onready var _center_popup: Label = $HUDLayer/CenterPopup
 @onready var _danger_label: Label = $HUDLayer/DangerLabel
 @onready var _arrow: DestinationArrow = $HUDLayer/DestinationArrow
@@ -51,6 +55,10 @@ var waiting_passengers: Array[Passenger] = []
 var tutorial_mode: bool = false
 var _tutorial_step: int = 1
 var _tutorial_vibe_shown: bool = false
+var _tutorial_welcome_shown: bool = false
+var _tutorial_idle_timer: float = 0.0
+var _tutorial_reminder_shown: bool = false
+var _tutorial_obj_key: String = ""
 var _tutorial_initial_time: float = 0.0
 
 var _is_dedicated_tutorial: bool = false
@@ -71,9 +79,18 @@ var night_intensity: float = 0.0
 
 func _ready() -> void:
 	_setup_fonts()
+	I18n.language_changed.connect(_on_language_changed)
 	var params: Dictionary = GameFlow.pending_play_params.duplicate(true)
 	GameFlow.pending_play_params.clear()
 	_initialize_run(params)
+
+
+func _on_language_changed(_lang: String) -> void:
+	_danger_label.text = I18n.t("hud_danger")
+	if _mode_badge.visible and rule_strategy != null:
+		_mode_badge.text = I18n.t("hud_zen") if rule_strategy is ZenStrategy else I18n.t("hud_tutorial")
+	_tutorial_obj_key = ""
+	_update_tutorial_ui()
 
 
 func _setup_fonts() -> void:
@@ -155,7 +172,13 @@ func _initialize_run(params: Dictionary) -> void:
 	if tutorial_mode:
 		_tutorial_step = 1
 		_tutorial_vibe_shown = false
+		_tutorial_welcome_shown = false
+		_tutorial_idle_timer = 0.0
+		_tutorial_reminder_shown = false
+		_tutorial_obj_key = ""
 		_tutorial_initial_time = rule_strategy.time_remaining
+	_taximeter.set_tutorial_paused(tutorial_mode)
+	_update_tutorial_ui()
 
 	_workday_duration = maxf(1.0, float(params.get("time_limit", GameConstants.WORKDAY_TIME_LIMIT)))
 	_atmosphere_elapsed = 0.0
@@ -193,6 +216,7 @@ func _play_intro_banner() -> void:
 	tween.tween_property(_start_label, "modulate:a", 0.0, 1.0)
 	tween.tween_callback(func() -> void:
 		if tutorial_mode and not _game_over_triggered:
+			_tutorial_welcome_shown = true
 			_show_tutorial_dialog(I18n.t("tutorial_title"), I18n.t(_get_integrated_key("welcome")))
 	)
 
@@ -258,7 +282,67 @@ func _open_pause_menu() -> void:
 	AudioManager.play_sfx("pause")
 	taxi.reset_inputs()
 	var pause_scene: PackedScene = load("res://src/menus/pause_menu.tscn") as PackedScene
-	GameFlow.push_modal(pause_scene.instantiate() as Control, true)
+	var pause_menu: PauseMenuModal = pause_scene.instantiate() as PauseMenuModal
+	pause_menu.set_tutorial_skippable(tutorial_mode)
+	if tutorial_mode:
+		pause_menu.skip_tutorial_requested.connect(skip_tutorial)
+	GameFlow.push_modal(pause_menu, true)
+
+
+func skip_tutorial() -> void:
+	if not tutorial_mode:
+		return
+	_finish_integrated_tutorial(false)
+	if active_passenger == null:
+		_arrow.deactivate()
+	_show_center_popup(I18n.t("tutorial_skipped_notice"), GameConstants.UI_GOLD)
+
+
+func _finish_integrated_tutorial(show_complete_dialog: bool) -> void:
+	_tutorial_step = 3
+	tutorial_mode = false
+	GameFlow.set_tutorial_enabled(false)
+	_taximeter.set_tutorial_paused(false)
+	_update_tutorial_ui()
+	if show_complete_dialog:
+		_show_tutorial_dialog(I18n.t("tutorial_completed_title"), I18n.t("tutorial_integrated_complete"))
+
+
+func _resolve_tutorial_objective_key() -> String:
+	if not tutorial_mode:
+		return ""
+	if _tutorial_step == 1 or active_passenger == null:
+		return "tutorial_obj_pickup"
+	var music_ready: bool = (
+		rule_strategy.always_vibe
+		or (taxi != null and taxi.is_vibe_mode())
+		or _radio.get_current_genre() == active_passenger.music_preference
+	)
+	return "tutorial_obj_deliver" if music_ready else "tutorial_obj_radio"
+
+
+func _update_tutorial_ui() -> void:
+	if _tutorial_banner == null:
+		return
+	_tutorial_banner.visible = tutorial_mode
+	if not tutorial_mode:
+		_tutorial_obj_key = ""
+		return
+	var next_key: String = _resolve_tutorial_objective_key()
+	if next_key != _tutorial_obj_key:
+		_tutorial_obj_key = next_key
+		_tutorial_tag.text = I18n.t("hud_tutorial")
+		_tutorial_objective.text = I18n.t(next_key)
+
+
+func _trigger_tutorial_pickup_reminder() -> void:
+	_tutorial_reminder_shown = true
+	_arrow.pulse_highlight()
+	_show_center_popup(I18n.t("tutorial_reminder_pickup"), Color(0.39, 1.0, 1.0))
+	if _tutorial_banner != null and _tutorial_banner.visible:
+		var tween: Tween = create_tween().set_loops(2)
+		tween.tween_property(_tutorial_banner, "modulate", Color(1.0, 0.92, 0.45, 1.0), 0.25)
+		tween.tween_property(_tutorial_banner, "modulate", Color.WHITE, 0.25)
 
 
 func _update_atmosphere(delta: float) -> void:
@@ -373,6 +457,7 @@ func _pickup_passenger(p: Passenger) -> void:
 
 		if tutorial_mode and _tutorial_step == 1:
 			_tutorial_step = 2
+			_update_tutorial_ui()
 			var on_close: Callable = Callable()
 			if rule_strategy.has_hud:
 				_passenger_hud.bind_passenger(p, false)
@@ -411,10 +496,7 @@ func _deliver_active_passenger() -> void:
 			taxi.set_vibe_mode(false)
 
 		if tutorial_mode and _tutorial_step == 2:
-			_tutorial_step = 3
-			tutorial_mode = false
-			GameFlow.set_tutorial_enabled(false)
-			_show_tutorial_dialog(I18n.t("tutorial_completed_title"), I18n.t("tutorial_integrated_complete"))
+			_finish_integrated_tutorial(true)
 
 		if is_instance_valid(p):
 			p.queue_free()
@@ -469,10 +551,20 @@ func _update_hud_displays(delta: float) -> void:
 	elif tutorial_mode and _tutorial_step == 1 and active_passenger == null:
 		var nearest: Passenger = _get_nearest_waiting_passenger()
 		if nearest != null:
-			_arrow.target_world_pos = nearest.global_position
+			if not _arrow.active:
+				_arrow.activate(nearest.global_position, false)
+			else:
+				_arrow.target_world_pos = nearest.global_position
 			_arrow.update_arrow(delta, _camera)
 		else:
 			_arrow.deactivate()
+		if _tutorial_welcome_shown and not _tutorial_reminder_shown:
+			_tutorial_idle_timer += delta
+			if _tutorial_idle_timer >= TUTORIAL_REMINDER_DELAY:
+				_trigger_tutorial_pickup_reminder()
+
+	if tutorial_mode:
+		_update_tutorial_ui()
 
 
 func _get_nearest_waiting_passenger() -> Passenger:
