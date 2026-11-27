@@ -4,6 +4,24 @@ Notable changes on the project will be documented here
 
 Format based on [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/), version format by [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.1.0 - 2026-11-27
+
+### Added
+ - Dynamic day-night atmosphere cycle (`CanvasModulate`) progressing from morning through midday and warm sunset into neon night (`Workday` tied to shift timer; `Arcade` and `Zen` on smooth continuous loops)
+ - Additive vehicle headlights and brake lights alongside unshaded emissive night building windows and neon gameplay accents (pickup/delivery rings and Vibe trails)
+ - Persistent top-center `TutorialBanner` displaying live step-by-step objectives during the guided first-run tutorial (*pick up client* -> *tune radio* -> *deliver to green circle*)
+ - Explicit `TUTORIAL` header and frozen cyan LED styling on the `Taximeter` while the shift timer is paused for the guided tutorial
+ - **Skip Tutorial** option in the Pause menu during guided tutorial runs, plus a gentle 22-second idle reminder that pulses the navigation arrow
+ - Official graphic Vibe Taxi logo on the Title Screen
+
+### Changed
+ - Upgraded GitHub Actions CI and release workflows to Node 24 actions and stripped `.apk.idsig` sidecar files from release artifacts
+
+### Fixed
+ - Fix Web (HTML5) frame hitches when switching radio stations by streaming music playback (`PLAYBACK_TYPE_STREAM`) with station caching, debounce, and background prewarming instead of synchronous full-track sample decoding
+ - Fix navigation arrow not activating toward the nearest waiting passenger during step 1 of the guided tutorial
+ - Fix audio playback and test node cleanup leaks on headless test runner exit
+
 ## 2.0.0 - 2026-11-20
 
 ### Added
